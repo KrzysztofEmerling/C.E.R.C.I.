@@ -12,7 +12,8 @@ struct Move
 
 // class MoveGenerator
 // {
-//     void GetLegalMovesQueue(BoardState state, std::queue<Move> &moves)
+// public:
+//     static void GetLegalMovesQueue(const BoardState &state, std::queue<Move> &moves)
 //     {
         
 //     }
