@@ -1,8 +1,8 @@
 #include "FENParcer.h"
 #include <cstdlib> 
 
+#include <iostream>
 
-// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 Flags ParseFEN(const String fen, u64f (&bitboards)[13]) 
 {
     Flags flags = {};
@@ -64,21 +64,25 @@ Flags ParseFEN(const String fen, u64f (&bitboards)[13])
     }
 
     index++;  
-    if (fen[index] != '-') {
+    if (fen[index] != '-') 
+    {
         int epFile = fen[index] - 'a';
         int epRank = fen[index + 1] - '1';
         bitboards[Empassants] |= BitboardsIndecies[epRank * 8 + epFile];
         index += 2;
-    } else {
+    }
+    else
+    {
         index++;
     }
 
     while (fen[index] == ' ') index++;
-    flags.uHalfmoveClock = std::atoi(&fen[index]);
+    flags.uHalfmoveClock = static_cast<u_int8_t>(std::atoi(&fen[index]));
 
     while (fen[index] >= '0' && fen[index] <= '9') index++;
     while (fen[index] == ' ') index++;
-    flags.uMoves = std::atoi(&fen[index]);
+
+    flags.uMoves = static_cast<u_int16_t>(std::atoi(&fen[index]));
 
     return flags;
 }

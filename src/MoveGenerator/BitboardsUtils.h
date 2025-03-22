@@ -9,7 +9,7 @@ using u64 = uint64_t;
 
 union Flags
 {
-    u64 uFlagsValue;  //do wykorzystania w switch
+    u64 uFlagsValue;
     struct
     {
         uint8_t uWhiteOnMove;
