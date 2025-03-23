@@ -26,14 +26,14 @@ union Flags
 
 enum BitBoardsIndecis
 {
-    WhitePowns,
+    WhitePawns,
     WhiteKnights,
     WhiteBishops,
     WhiteRooks,
     WhiteQueens,
     WhiteKing,
 
-    BlackPowns,
+    BlackPawns,
     BlackKnights,
     BlackBishops,
     BlackRooks,
