@@ -28,13 +28,13 @@ Flags ParseFEN(const String fen, u64f (&bitboards)[13])
         else {  
             int boardIndex;
             switch (piece) {
-                case 'p': boardIndex = BlackPowns; break;
+                case 'p': boardIndex = BlackPawns; break;
                 case 'r': boardIndex = BlackRooks; break;
                 case 'n': boardIndex = BlackKnights; break;
                 case 'b': boardIndex = BlackBishops; break;
                 case 'q': boardIndex = BlackQueens; break;
                 case 'k': boardIndex = BlackKing; break;
-                case 'P': boardIndex = WhitePowns; break;
+                case 'P': boardIndex = WhitePawns; break;
                 case 'R': boardIndex = WhiteRooks; break;
                 case 'N': boardIndex = WhiteKnights; break;
                 case 'B': boardIndex = WhiteBishops; break;
