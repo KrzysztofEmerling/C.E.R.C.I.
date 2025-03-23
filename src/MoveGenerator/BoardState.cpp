@@ -81,10 +81,11 @@ void BoardState::MakeMove(Move move)
 
     if(fig_to_capture > -1)
     {
-        m_Pieces[fig_to_capture] ^= dest_pos;
+        //m_Pieces[fig_to_capture] ^= dest_pos; w przypadku enpassanta doda pionka przeciwnikowi
+        m_Pieces[fig_to_capture] &= ~dest_pos;
         m_Flags.uHalfmoveClock = 0;
     }
-    else if(fig_to_move == WhitePowns || fig_to_move == BlackPowns) m_Flags.uHalfmoveClock = 0;
+    else if(fig_to_move == WhitePawns || fig_to_move == BlackPawns) m_Flags.uHalfmoveClock = 0;
     else m_Flags.uHalfmoveClock += 1;
 
     if(!IsWhiteMove())m_Flags.uMoves += 1;  
