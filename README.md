@@ -9,5 +9,3 @@ C.E.R.C.I is a hybrid chess engine combining classical tree search methods (Alph
 - Adaptive playing styles – choose from different personality profiles, such as aggressive, positional, or defensive.
 
 - AI-powered evaluation – transformer-based position assessment provides a more intuitive and strategic gameplay experience.
-
-- Optimized computation – efficient use of Alpha-Beta Pruning.
