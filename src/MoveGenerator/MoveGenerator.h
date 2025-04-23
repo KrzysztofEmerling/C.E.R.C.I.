@@ -13,21 +13,23 @@ struct Move
 class MoveGenerator
 {
 public:
-    static void GetLegalMovesBBs(const BoardState &state, u64f &LegalMovesBBs[6]);
+    static void GetLegalMovesBBs(const BoardState &state, u64f (&LegalMovesBBs)[6]);
 private:
     static u64 GetPseudoLegalWhitePawnsMoves(const u64f powns, const u64 empty, const u64 black_with_enpassants);
-    static u64 GetPseudoLegalWhitePawnsMoves(const u64f powns, const u64 empty, const u64 black_with_enpassants, u64 &pownsAttacks);
+    static u64 GetPseudoLegalWhitePawnsAttacks(const u64f powns);
     static u64 GetPseudoLegalBlackPawnsMoves(const u64f pawns, const u64 empty, const u64 white_with_enpassants);
-    static u64 GetPseudoLegalBlackPawnsMoves(const u64f pawns, const u64 empty, const u64 white_with_enpassants, u64 &pownsAttacks);
+    static u64 GetPseudoLegalBlackPawnsAttacks(const u64f pawns);
     
-    static u64 GetPseudoLegalKnightsMoves(const u64f knights, const u64 allay);
+    static u64 GetPseudoLegalKnightsMoves(const u64f knights, const u64 notAllay);
     static u64 GetKnightsAttacks(const u64f knights);
     
-    static u64 GetPseudoLegalRooksMoves(const u64f rooks, const u64 allay, const u64 blockers);
-    static u64 GetPseudoLegalBishopsMoves(const u64f bishops, const u64 allay, const u64 blockers);
-    static u64 GetPseudoLegalQueensMoves(const u64f queens, const u64 allay, const u64 blockers);
+    static u64 GetPseudoLegalRooksMoves(const u64f rooks, const u64 notAllay, const u64 blockers);
+    static u64 GetPseudoLegalBishopsMoves(const u64f bishops, const u64 notAllay, const u64 blockers);
+    static u64 GetPseudoLegalQueensMoves(const u64f queens, const u64 notAllay, const u64 blockers);
 
-    static u64 GetPseudoLegalKingMoves(const u64f king, const u64 allay);
+    static u64 GetPseudoLegalKingMoves(const u64f king, const u64 notAllay);
+
+    static u64 GetPinsMask(const u64f king, const u64 oponent, const u64 allay);
 
     static inline constexpr u64 NOT_RANKS_1_2 = 0xFFFFFFFFFFFF0000;
     static inline constexpr u64 NOT_RANK_1 =    0xFFFFFFFFFFFFFF00;
