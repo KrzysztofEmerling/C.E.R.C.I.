@@ -1,8 +1,9 @@
 #include "MoveGenerator.h"
 #include "MagicBitboards/RookMagicBitboards.h"
 #include "MagicBitboards/BishopMagicBitboards.h"
+//#include <bit>
 
-void MoveGenerator::GetLegalMovesBBs(const BoardState &state, u64f &LegalMovesBBs[6])
+void MoveGenerator::GetLegalMovesBBs(const BoardState &state,  u64f (&LegalMovesBBs)[6])
 {
     for(int i = 0; i < 6; i++)    { LegalMovesBBs[i] = 0ULL; }
 
@@ -39,7 +40,7 @@ void MoveGenerator::GetLegalMovesBBs(const BoardState &state, u64f &LegalMovesBB
         oponentRooksAttacks = GetPseudoLegalRooksMoves(pieces[BlackRooks], notOponent, allWithoutKing);
         oponentQueensAttacks = GetPseudoLegalQueensMoves(pieces[BlackQueens], notOponent, allWithoutKing);
         oponentKingAttacks = GetPseudoLegalKingMoves(pieces[BlackKing], notOponent);
-        u64 underAttack = plOponentKnights | plOponentBishops | plOponentRooks | plOponentQueens | plOponentKing;
+        u64 underAttack = oponentPawnsAttacks | oponentKnightsAttacks | oponentBishopsAttacks | oponentRooksAttacks | oponentQueensAttacks | oponentKingAttacks;
 
         //legalne ruchy
         plKing = GetPseudoLegalKingMoves(pieces[WhiteKing], notAllay);
@@ -47,7 +48,7 @@ void MoveGenerator::GetLegalMovesBBs(const BoardState &state, u64f &LegalMovesBB
         if(pieces[WhiteKing] & underAttack)
         {
             attackers |= GetKnightsAttacks(pieces[WhiteKing]) & pieces[BlackKnights];
-            attackers |= GetPseudoLegalBishopMoves(pieces[WhiteKing],0xffffffffffffffff,  all) & (pieces[BlackBishops] | pieces[BlackQueens]);
+            attackers |= GetPseudoLegalBishopsMoves(pieces[WhiteKing],0xffffffffffffffff,  all) & (pieces[BlackBishops] | pieces[BlackQueens]);
             attackers |= GetPseudoLegalRooksMoves(pieces[WhiteKing],0xffffffffffffffff,  all) & (pieces[BlackRooks] | pieces[BlackQueens]);
             
             if(std::popcount(attackers) > 1)
@@ -62,8 +63,8 @@ void MoveGenerator::GetLegalMovesBBs(const BoardState &state, u64f &LegalMovesBB
                 int kingSquare = __builtin_ctzll(pieces[WhiteKing]);
                 int attackerSquare = __builtin_ctzll(attackers);
             
-                u64 posibleMovesMask = GetBetweenSquares(kingSquare, attackerSquare) | attackers;
-                u64 pinedPiecesMask = 
+                u64 posibleMovesMask = BetweenSquaresTable[kingSquare][attackerSquare] | attackers;
+                u64 pinedPiecesMask = GetPinsMask(pieces[WhiteKing], black, white);
 
                 //TODO: Sprawdzenie związań
                 plPawns = GetPseudoLegalWhitePawnsMoves(pieces[WhitePawns], empty, black | pieces[Empassants]);
@@ -158,7 +159,7 @@ u64 MoveGenerator::GetPseudoLegalKnightsMoves(const u64f knights, const u64 notA
             // 1 w dół 2 w prawo
             ((NOT_COLS_AB & knights) >> 10)|
             // 1 w dół 2 w lewo
-            ((& NOT_COLS_GH & knights) >> 6))   & notAllay;
+            ((NOT_COLS_GH & knights) >> 6))   & notAllay;
 }
 u64 MoveGenerator::GetKnightsAttacks(const u64f knights)
 {
@@ -178,7 +179,7 @@ u64 MoveGenerator::GetKnightsAttacks(const u64f knights)
             // 1 w dół 2 w prawo
             ((NOT_COLS_AB & knights) >> 10)|
             // 1 w dół 2 w lewo
-            ((& NOT_COLS_GH & knights) >> 6));
+            ((NOT_COLS_GH & knights) >> 6));
 }
 
 u64 MoveGenerator::GetPseudoLegalBishopsMoves(const u64f bishops, const u64 notAllay, const u64 blockers)
@@ -233,7 +234,7 @@ u64 MoveGenerator::GetPseudoLegalQueensMoves(const u64f queens, const u64 notAll
         u64 bishopBlockersMask = BishopMagicBitboards::GetBlockersMask(square);
 
         u64 queenMoves = RookMagicBitboards::GetMovesMask(square, blockers & rookBlockersMask);
-        u64 queenMoves |= BishopMagicBitboards::GetMovesMask(square, blockers & bishopBlockersMask);
+        queenMoves |= BishopMagicBitboards::GetMovesMask(square, blockers & bishopBlockersMask);
         moves |= queenMoves & notAllay; 
     }
     return moves;
@@ -259,7 +260,13 @@ u64 MoveGenerator::GetPseudoLegalKingMoves(const u64f king, const u64 notAllay)
 u64 MoveGenerator::GetPinsMask(const u64f king, const u64 oponent, const u64 allay)
 {
     //znalezienie atakujących sliderów na przeciw króla zapisanie do bitboarda
+    int square = __builtin_ctzll(king); 
     
+    u64 horizontalBlockersMask = RookMagicBitboards::GetBlockersMask(square);
+    u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(square);
+
+    u64 horizontalEnemisMask = RookMagicBitboards::GetMovesMask(square, oponent & horizontalBlockersMask);
+    u64 diagonalEnemisMask = BishopMagicBitboards::GetMovesMask(square, oponent & diagonalBlockersMask);
     //dla wszystkich (gońców, wierz, hetmanów przeciwnika) po & z bitboardem 
         
         //sprawdzenie czy pomiędzy sliderem i królem jest dkoładnie 1 twoja bierka
