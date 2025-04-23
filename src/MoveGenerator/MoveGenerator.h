@@ -1,5 +1,5 @@
 #pragma once
-#include<queue>
+#include <queue>
 
 #include "BitboardsUtils.h"
 #include "BoardState.h"
@@ -8,52 +8,64 @@ struct Move
 {
     uint8_t uStartingSquere;
     uint8_t uDestSquere;
+    uint8_t uPromotionPiece;
+
+    Move(uint8_t start, uint8_t dest, uint8_t promo) : uStartingSquere(start), uDestSquere(dest), uPromotionPiece(promo) {}
+    Move(uint8_t start, uint8_t dest) : uStartingSquere(start), uDestSquere(dest), uPromotionPiece(0) {}
 };
 
 class MoveGenerator
 {
 public:
-    static void GetLegalMovesBBs(const BoardState &state, u64f (&LegalMovesBBs)[6]);
+    static void GetLegalMoves(const BoardState &state, std::queue<Move> &moves);
+
 private:
-    static u64 GetPseudoLegalWhitePawnsMoves(const u64f powns, const u64 empty, const u64 black_with_enpassants);
-    static u64 GetPseudoLegalWhitePawnsAttacks(const u64f powns);
-    static u64 GetPseudoLegalBlackPawnsMoves(const u64f pawns, const u64 empty, const u64 white_with_enpassants);
-    static u64 GetPseudoLegalBlackPawnsAttacks(const u64f pawns);
-    
-    static u64 GetPseudoLegalKnightsMoves(const u64f knights, const u64 notAllay);
-    static u64 GetKnightsAttacks(const u64f knights);
-    
-    static u64 GetPseudoLegalRooksMoves(const u64f rooks, const u64 notAllay, const u64 blockers);
-    static u64 GetPseudoLegalBishopsMoves(const u64f bishops, const u64 notAllay, const u64 blockers);
-    static u64 GetPseudoLegalQueensMoves(const u64f queens, const u64 notAllay, const u64 blockers);
+    static u64 GetWhitePawnsAttacksBBs(u64f powns);
+    static u64 GetBlackPawnsAttacksBBs(u64f pawns);
 
-    static u64 GetPseudoLegalKingMoves(const u64f king, const u64 notAllay);
+    static u64 GetKnightsAttacksBBs(u64f knights);
 
-    static u64 GetPinsMask(const u64f king, const u64 oponent, const u64 allay);
+    static u64 GetPseudoLegalRooksBBs(u64f rooks, u64 notAllay, u64 blockers);
+    static u64 GetPseudoLegalBishopsBBs(u64f bishops, u64 notAllay, u64 blockers);
+    static u64 GetPseudoLegalQueensBBs(u64f queens, u64 notAllay, u64 blockers);
+    static u64 GetPseudoLegalKingBBs(u64f king, u64 notOponent);
 
-    static inline constexpr u64 NOT_RANKS_1_2 = 0xFFFFFFFFFFFF0000;
-    static inline constexpr u64 NOT_RANK_1 =    0xFFFFFFFFFFFFFF00;
-    static inline constexpr u64 NOT_RANKS_7_8 = 0x0000FFFFFFFFFFFF;
-    static inline constexpr u64 NOT_RANK_8 =    0x00FFFFFFFFFFFFFF;
+    static void GetPinsMasks(u64f king, u64f oponentBishops, u64f oponentRooks, u64f oponentQueens, u64 oponent, u64 allay, u64 &alongLinePinsMask, u64 &diagonalPinsMask);
 
-    static inline constexpr u64 NOT_COL_H =     0x7F7F7F7F7F7F7F7F;
-    static inline constexpr u64 NOT_COL_A =     0xFEFEFEFEFEFEFEFE;
-    static inline constexpr u64 NOT_COLS_AB =   0xFCFCFCFCFCFCFCFC;
-    static inline constexpr u64 NOT_COLS_GH =   0x3F3F3F3F3F3F3F3F;
+    static void GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u64 enpassants, u64 pinsMask, std::queue<Move> &moves);
+    static void GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u64 enpassants, u64 pinsMask, std::queue<Move> &moves);
+
+    static void GetLegalKnightsMoves(u64f knights, u64 notAllay, std::queue<Move> &moves);
+
+    static void GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u64 pinsMask, std::queue<Move> &moves);
+    static void GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 pinsMask, std::queue<Move> &moves);
+    static void GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 pinsMask, std::queue<Move> &moves);
+
+    static inline constexpr u64 WHITE_DUBLE_PUSH = 0x0000000000FF0000;
+    static inline constexpr u64 BLACK_DUBLE_PUSH = 0x0000FF0000000000;
+    // static inline constexpr u64 NOT_RANKS_7_8 = 0x0000FFFFFFFFFFFF;
+    // static inline constexpr u64 NOT_RANK_8 = 0x00FFFFFFFFFFFFFF;
+
+    static inline constexpr u64 NOT_COL_H = 0x7F7F7F7F7F7F7F7F;
+    static inline constexpr u64 NOT_COL_A = 0xFEFEFEFEFEFEFEFE;
+    static inline constexpr u64 NOT_COLS_AB = 0xFCFCFCFCFCFCFCFC;
+    static inline constexpr u64 NOT_COLS_GH = 0x3F3F3F3F3F3F3F3F;
 };
-
 
 constexpr u64 GetBetweenSquaresConstexpr(int sq1, int sq2)
 {
-    if (sq1 == sq2) return 0ULL;
+    if (sq1 == sq2)
+        return 0ULL;
 
     int file1 = sq1 % 8;
     int rank1 = sq1 / 8;
     int file2 = sq2 % 8;
     int rank2 = sq2 / 8;
 
-    int df = (file2 > file1) ? 1 : (file2 < file1) ? -1 : 0;
-    int dr = (rank2 > rank1) ? 1 : (rank2 < rank1) ? -1 : 0;
+    int df = (file2 > file1) ? 1 : (file2 < file1) ? -1
+                                                   : 0;
+    int dr = (rank2 > rank1) ? 1 : (rank2 < rank1) ? -1
+                                                   : 0;
 
     // Sprawdzenie, czy pola leżą na linii prostej lub diagonalnej
     if (df != 0 && dr != 0 && (abs(file2 - file1) != abs(rank2 - rank1)))
