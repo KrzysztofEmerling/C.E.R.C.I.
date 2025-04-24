@@ -41,7 +41,7 @@ private:
     static void GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves);
     static void GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves);
 
-    static void GetLegalKingMovesFromBBs(int square, u64 movementBBs, std::queue<Move> &moves);
+    static void GetLegalKingMoves(int square, u64 movementBBs, std::queue<Move> &moves);
 
     static void GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posibleMovesMask, std::queue<Move> &moves);
 
@@ -49,8 +49,15 @@ private:
     static void GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 posibleMovesMask, std::queue<Move> &moves);
     static void GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 posibleMovesMask, std::queue<Move> &moves);
 
+    static u64 ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u64 white, u64 black,
+                                       u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], std::queue<Move> &moves);
+
+    static u64 ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u64 white, u64 black,
+                                       u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], std::queue<Move> &moves);
+
     static inline constexpr u64 WHITE_DUBLE_PUSH = 0x0000000000FF0000;
     static inline constexpr u64 BLACK_DUBLE_PUSH = 0x0000FF0000000000;
+
     // static inline constexpr u64 NOT_RANKS_7_8 = 0x0000FFFFFFFFFFFF;
     // static inline constexpr u64 NOT_RANK_8 = 0x00FFFFFFFFFFFFFF;
 
