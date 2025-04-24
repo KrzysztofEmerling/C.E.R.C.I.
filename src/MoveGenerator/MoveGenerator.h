@@ -20,6 +20,14 @@ public:
     static void GetLegalMoves(const BoardState &state, std::queue<Move> &moves);
 
 private:
+    enum PinablePieces
+    {
+        Pawns,
+        Bishops,
+        Rooks,
+        Queens
+    };
+
     static u64 GetWhitePawnsAttacksBBs(u64f powns);
     static u64 GetBlackPawnsAttacksBBs(u64f pawns);
 
@@ -30,16 +38,16 @@ private:
     static u64 GetPseudoLegalQueensBBs(u64f queens, u64 notAllay, u64 blockers);
     static u64 GetPseudoLegalKingBBs(u64f king, u64 notOponent);
 
-    static void GetPinsMasks(u64f king, u64f oponentBishops, u64f oponentRooks, u64f oponentQueens, u64 oponent, u64 allay, u64 &alongLinePinsMask, u64 &diagonalPinsMask);
+    static void GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves);
+    static void GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves);
 
-    static void GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u64 enpassants, u64 pinsMask, std::queue<Move> &moves);
-    static void GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u64 enpassants, u64 pinsMask, std::queue<Move> &moves);
+    static void GetLegalKingMovesFromBBs(int square, u64 movementBBs, std::queue<Move> &moves);
 
-    static void GetLegalKnightsMoves(u64f knights, u64 notAllay, std::queue<Move> &moves);
+    static void GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posibleMovesMask, std::queue<Move> &moves);
 
-    static void GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u64 pinsMask, std::queue<Move> &moves);
-    static void GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 pinsMask, std::queue<Move> &moves);
-    static void GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 pinsMask, std::queue<Move> &moves);
+    static void GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u64 posibleMovesMask, std::queue<Move> &moves);
+    static void GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 posibleMovesMask, std::queue<Move> &moves);
+    static void GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 posibleMovesMask, std::queue<Move> &moves);
 
     static inline constexpr u64 WHITE_DUBLE_PUSH = 0x0000000000FF0000;
     static inline constexpr u64 BLACK_DUBLE_PUSH = 0x0000FF0000000000;
