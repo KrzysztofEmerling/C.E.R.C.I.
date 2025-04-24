@@ -5,16 +5,13 @@
 
 void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &moves)
 {
-
     const u64f *pieces = state.GetBBs();
     const Flags flags = state.GetFlags();
 
     u64 white = pieces[0] | pieces[1] | pieces[2] |
                 pieces[3] | pieces[4] | pieces[5];
-
     u64 black = pieces[6] | pieces[7] | pieces[8] |
                 pieces[9] | pieces[10] | pieces[11];
-
     u64 all = white | black;
     u64 empty = ~all;
 
@@ -31,7 +28,6 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
         u64 notOponent = ~black;
         u64 allWithoutKing = all & (~pieces[WhiteKing]);
 
-        // atakowane pola
         oponentPawnsAttacks = GetBlackPawnsAttacksBBs(pieces[BlackPawns]);
         oponentKnightsAttacks = GetKnightsAttacksBBs(pieces[BlackKnights]);
         oponentBishopsAttacks = GetPseudoLegalBishopsBBs(pieces[BlackBishops], notOponent, allWithoutKing);
@@ -40,7 +36,6 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
         oponentKingAttacks = GetPseudoLegalKingBBs(pieces[BlackKing], notOponent);
         u64 underAttack = oponentPawnsAttacks | oponentKnightsAttacks | oponentBishopsAttacks | oponentRooksAttacks | oponentQueensAttacks | oponentKingAttacks;
 
-        // legalne ruchy
         plKing = GetPseudoLegalKingBBs(pieces[WhiteKing], notAllay) & (~underAttack);
         int kingSquare = __builtin_ctzll(pieces[WhiteKing]);
 
@@ -53,7 +48,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
 
             if (std::popcount(attackers) > 1)
             {
-                GetLegalKingMovesFromBBs(kingSquare, plKing, moves);
+                GetLegalKingMoves(kingSquare, plKing, moves);
                 return;
             }
             else
@@ -61,322 +56,113 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
                 int attackerSquare = __builtin_ctzll(attackers);
                 u64 posibleMovesMask = BetweenSquaresTable[kingSquare][attackerSquare] | attackers;
 
-                /////////////////////////////RuchyZwiązanychFigur//////////////////////////////////////
-                u64f unpinPawns = pieces[WhitePawns];
-                u64f unpinBishops = pieces[WhiteBishops];
-                u64f unpinRooks = pieces[WhiteRooks];
-                u64f unpinQueens = pieces[WhiteQueens];
+                u64f unpinedPieces[4];
+                unpinedPieces[PinablePieces::Pawns] = pieces[WhitePawns];
+                unpinedPieces[PinablePieces::Bishops] = pieces[WhiteBishops];
+                unpinedPieces[PinablePieces::Rooks] = pieces[WhiteRooks];
+                unpinedPieces[PinablePieces::Queens] = pieces[WhiteQueens];
+                u64 notUnpinPiecesMask = ~ResolveWhitePinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
-                u64 horizontalBlockersMask = RookMagicBitboards::GetBlockersMask(kingSquare);
-                u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(kingSquare);
-                u64 horizontalPinsMask = RookMagicBitboards::GetMovesMask(kingSquare, black & horizontalBlockersMask);
-                u64 diagonalPinsMask = BishopMagicBitboards::GetMovesMask(kingSquare, black & diagonalBlockersMask);
-                u64 notUnpinPiecesMask = ~(horizontalPinsMask | diagonalPinsMask);
-
-                u64 temp = horizontalPinsMask & pieces[BlackRooks];
-                while (temp)
-                {
-                    int enemySquare = __builtin_ctzll(temp);
-                    temp &= temp - 1;
-
-                    u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
-                    if (std::popcount(posiblePinLine & white) == 1)
-                    {
-                        u64 pinned_piece;
-                        if ((pinned_piece = unpinBishops & posiblePinLine))
-                        {
-                            // not generating moves for piece becos thera are none
-                            unpinBishops ^= pinned_piece;
-                        }
-
-                        else if ((pinned_piece = unpinPawns & posiblePinLine))
-                        {
-                            unpinPawns ^= pinned_piece;
-                            GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinLine & posibleMovesMask, moves);
-                        }
-                        else if ((pinned_piece = unpinRooks & posiblePinLine))
-                        {
-                            unpinRooks ^= pinned_piece;
-                            GetLegalRooksMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
-                        }
-                        else if ((pinned_piece = unpinQueens & posiblePinLine))
-                        {
-                            unpinQueens ^= pinned_piece;
-                            GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
-                        }
-                    }
-                }
-
-                temp = horizontalPinsMask & pieces[BlackQueens];
-                while (temp)
-                {
-                    int enemySquare = __builtin_ctzll(temp);
-                    temp &= temp - 1;
-
-                    u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
-                    if (std::popcount(posiblePinLine & white) == 1)
-                    {
-                        u64 pinned_piece;
-                        if ((pinned_piece = unpinBishops & posiblePinLine))
-                        {
-                            unpinBishops ^= pinned_piece;
-                        }
-
-                        else if ((pinned_piece = unpinPawns & posiblePinLine))
-                        {
-                            unpinPawns ^= pinned_piece;
-                            GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinLine & posibleMovesMask, moves);
-                        }
-                        else if ((pinned_piece = unpinRooks & posiblePinLine))
-                        {
-                            unpinRooks ^= pinned_piece;
-                            GetLegalRooksMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
-                        }
-                        else if ((pinned_piece = unpinQueens & posiblePinLine))
-                        {
-                            unpinQueens ^= pinned_piece;
-                            GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
-                        }
-                    }
-                }
-
-                temp = diagonalPinsMask & pieces[BlackBishops];
-                while (temp)
-                {
-                    int enemySquare = __builtin_ctzll(temp);
-                    temp &= temp - 1;
-
-                    u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
-                    if (std::popcount(posiblePinDiagonal & white) == 1)
-                    {
-                        u64 pinned_piece;
-                        if ((pinned_piece = unpinRooks & posiblePinDiagonal))
-                        {
-                            unpinRooks ^= pinned_piece;
-                        }
-
-                        else if ((pinned_piece = unpinPawns & posiblePinDiagonal))
-                        {
-                            unpinPawns ^= pinned_piece;
-                            GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinDiagonal & posibleMovesMask, moves);
-                        }
-                        else if ((pinned_piece = unpinBishops & posiblePinDiagonal))
-                        {
-                            unpinBishops ^= pinned_piece;
-                            GetLegalBishopsMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
-                        }
-                        else if ((pinned_piece = unpinQueens & posiblePinDiagonal))
-                        {
-                            unpinQueens ^= pinned_piece;
-                            GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
-                        }
-                    }
-                }
-
-                temp = diagonalPinsMask & pieces[BlackQueens];
-                while (temp)
-                {
-                    int enemySquare = __builtin_ctzll(temp);
-                    temp &= temp - 1;
-
-                    u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
-                    if (std::popcount(posiblePinDiagonal & white) == 1)
-                    {
-                        u64 pinned_piece;
-                        if ((pinned_piece = unpinRooks & posiblePinDiagonal))
-                        {
-                            unpinRooks ^= pinned_piece;
-                        }
-
-                        else if ((pinned_piece = unpinPawns & posiblePinDiagonal))
-                        {
-                            unpinPawns ^= pinned_piece;
-                            GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinDiagonal & posibleMovesMask, moves);
-                        }
-                        else if ((pinned_piece = unpinBishops & posiblePinDiagonal))
-                        {
-                            unpinBishops ^= pinned_piece;
-                            GetLegalBishopsMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
-                        }
-                        else if ((pinned_piece = unpinQueens & posiblePinDiagonal))
-                        {
-                            unpinQueens ^= pinned_piece;
-                            GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
-                        }
-                    }
-                }
-                ///////////////////////////////////////////////////////////////////////////////////////
-
-                GetLegalWhitePawnsMoves(unpinPawns, empty, black, pieces[Empassants], posibleMovesMask, moves);
+                GetLegalWhitePawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, black, pieces[Empassants], posibleMovesMask, moves);
                 GetLegalKnightsMoves(pieces[WhiteKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
-                GetLegalBishopsMoves(unpinBishops, notAllay, all, posibleMovesMask, moves);
-                GetLegalRooksMoves(unpinRooks, notAllay, all, posibleMovesMask, moves);
-                GetLegalQueensMoves(unpinQueens, notAllay, all, posibleMovesMask, moves);
-                GetLegalKingMovesFromBBs(kingSquare, plKing, moves);
+                GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
+                GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
+                GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
+                GetLegalKingMoves(kingSquare, plKing, moves);
             }
         }
         else
         {
             u64 posibleMovesMask = 0xffffffffffffffff;
 
-            /////////////////////////////RuchyZwiązanychFigur//////////////////////////////////////
-            u64f unpinPawns = pieces[WhitePawns];
-            u64f unpinBishops = pieces[WhiteBishops];
-            u64f unpinRooks = pieces[WhiteRooks];
-            u64f unpinQueens = pieces[WhiteQueens];
+            u64f unpinedPieces[4];
+            unpinedPieces[PinablePieces::Pawns] = pieces[WhitePawns];
+            unpinedPieces[PinablePieces::Bishops] = pieces[WhiteBishops];
+            unpinedPieces[PinablePieces::Rooks] = pieces[WhiteRooks];
+            unpinedPieces[PinablePieces::Queens] = pieces[WhiteQueens];
+            u64 notUnpinPiecesMask = ~ResolveWhitePinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
-            u64 horizontalBlockersMask = RookMagicBitboards::GetBlockersMask(kingSquare);
-            u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(kingSquare);
-            u64 horizontalPinsMask = RookMagicBitboards::GetMovesMask(kingSquare, black & horizontalBlockersMask);
-            u64 diagonalPinsMask = BishopMagicBitboards::GetMovesMask(kingSquare, black & diagonalBlockersMask);
-            u64 notUnpinPiecesMask = ~(horizontalPinsMask | diagonalPinsMask);
-
-            u64 temp = horizontalPinsMask & pieces[BlackRooks];
-            while (temp)
-            {
-                int enemySquare = __builtin_ctzll(temp);
-                temp &= temp - 1;
-
-                u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
-                if (std::popcount(posiblePinLine & white) == 1)
-                {
-                    u64 pinned_piece;
-                    if ((pinned_piece = unpinBishops & posiblePinLine))
-                    {
-                        // not generating moves for piece becos thera are none
-                        unpinBishops ^= pinned_piece;
-                    }
-
-                    else if ((pinned_piece = unpinPawns & posiblePinLine))
-                    {
-                        unpinPawns ^= pinned_piece;
-                        GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinLine, moves);
-                    }
-                    else if ((pinned_piece = unpinRooks & posiblePinLine))
-                    {
-                        unpinRooks ^= pinned_piece;
-                        GetLegalRooksMoves(pinned_piece, notAllay, all, posiblePinLine, moves);
-                    }
-                    else if ((pinned_piece = unpinQueens & posiblePinLine))
-                    {
-                        unpinQueens ^= pinned_piece;
-                        GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinLine, moves);
-                    }
-                }
-            }
-
-            temp = horizontalPinsMask & pieces[BlackQueens];
-            while (temp)
-            {
-                int enemySquare = __builtin_ctzll(temp);
-                temp &= temp - 1;
-
-                u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
-                if (std::popcount(posiblePinLine & white) == 1)
-                {
-                    u64 pinned_piece;
-                    if ((pinned_piece = unpinBishops & posiblePinLine))
-                    {
-                        unpinBishops ^= pinned_piece;
-                    }
-
-                    else if ((pinned_piece = unpinPawns & posiblePinLine))
-                    {
-                        unpinPawns ^= pinned_piece;
-                        GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinLine, moves);
-                    }
-                    else if ((pinned_piece = unpinRooks & posiblePinLine))
-                    {
-                        unpinRooks ^= pinned_piece;
-                        GetLegalRooksMoves(pinned_piece, notAllay, all, posiblePinLine, moves);
-                    }
-                    else if ((pinned_piece = unpinQueens & posiblePinLine))
-                    {
-                        unpinQueens ^= pinned_piece;
-                        GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinLine, moves);
-                    }
-                }
-            }
-
-            temp = diagonalPinsMask & pieces[BlackBishops];
-            while (temp)
-            {
-                int enemySquare = __builtin_ctzll(temp);
-                temp &= temp - 1;
-
-                u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
-                if (std::popcount(posiblePinDiagonal & white) == 1)
-                {
-                    u64 pinned_piece;
-                    if ((pinned_piece = unpinRooks & posiblePinDiagonal))
-                    {
-                        unpinRooks ^= pinned_piece;
-                    }
-
-                    else if ((pinned_piece = unpinPawns & posiblePinDiagonal))
-                    {
-                        unpinPawns ^= pinned_piece;
-                        GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinDiagonal, moves);
-                    }
-                    else if ((pinned_piece = unpinBishops & posiblePinDiagonal))
-                    {
-                        unpinBishops ^= pinned_piece;
-                        GetLegalBishopsMoves(pinned_piece, notAllay, all, posiblePinDiagonal, moves);
-                    }
-                    else if ((pinned_piece = unpinQueens & posiblePinDiagonal))
-                    {
-                        unpinQueens ^= pinned_piece;
-                        GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinDiagonal, moves);
-                    }
-                }
-            }
-
-            temp = diagonalPinsMask & pieces[BlackQueens];
-            while (temp)
-            {
-                int enemySquare = __builtin_ctzll(temp);
-                temp &= temp - 1;
-
-                u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
-                if (std::popcount(posiblePinDiagonal & white) == 1)
-                {
-                    u64 pinned_piece;
-                    if ((pinned_piece = unpinRooks & posiblePinDiagonal))
-                    {
-                        unpinRooks ^= pinned_piece;
-                    }
-
-                    else if ((pinned_piece = unpinPawns & posiblePinDiagonal))
-                    {
-                        unpinPawns ^= pinned_piece;
-                        GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinDiagonal, moves);
-                    }
-                    else if ((pinned_piece = unpinBishops & posiblePinDiagonal))
-                    {
-                        unpinBishops ^= pinned_piece;
-                        GetLegalBishopsMoves(pinned_piece, notAllay, all, posiblePinDiagonal, moves);
-                    }
-                    else if ((pinned_piece = unpinQueens & posiblePinDiagonal))
-                    {
-                        unpinQueens ^= pinned_piece;
-                        GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinDiagonal, moves);
-                    }
-                }
-            }
-            ///////////////////////////////////////////////////////////////////////////////////////
-
-            GetLegalWhitePawnsMoves(unpinPawns, empty, black, pieces[Empassants], posibleMovesMask, moves);
+            GetLegalWhitePawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, black, pieces[Empassants], posibleMovesMask, moves);
             GetLegalKnightsMoves(pieces[WhiteKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
-            GetLegalBishopsMoves(unpinBishops, notAllay, all, posibleMovesMask, moves);
-            GetLegalRooksMoves(unpinRooks, notAllay, all, posibleMovesMask, moves);
-            GetLegalQueensMoves(unpinQueens, notAllay, all, posibleMovesMask, moves);
-            GetLegalKingMovesFromBBs(kingSquare, plKing, moves);
-            // TODO: dodanie roszad
+            GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
+            GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
+            GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
+            GetLegalKingMoves(kingSquare, plKing, moves);
+
+            // TODO: dodanie roszad dla białych
+
+            return;
         }
     }
     else
     {
-        // to samo dla czarnych
+        u64 notAllay = ~black;
+        u64 notOponent = ~white;
+        u64 allWithoutKing = all & (~pieces[BlackKing]);
+
+        oponentPawnsAttacks = GetWhitePawnsAttacksBBs(pieces[WhitePawns]);
+        oponentKnightsAttacks = GetKnightsAttacksBBs(pieces[WhiteKnights]);
+        oponentBishopsAttacks = GetPseudoLegalBishopsBBs(pieces[WhiteBishops], notOponent, allWithoutKing);
+        oponentRooksAttacks = GetPseudoLegalRooksBBs(pieces[WhiteRooks], notOponent, allWithoutKing);
+        oponentQueensAttacks = GetPseudoLegalQueensBBs(pieces[WhiteQueens], notOponent, allWithoutKing);
+        oponentKingAttacks = GetPseudoLegalKingBBs(pieces[WhiteKing], notOponent);
+        u64 underAttack = oponentPawnsAttacks | oponentKnightsAttacks | oponentBishopsAttacks | oponentRooksAttacks | oponentQueensAttacks | oponentKingAttacks;
+
+        plKing = GetPseudoLegalKingBBs(pieces[BlackKing], notAllay) & (~underAttack);
+        int kingSquare = __builtin_ctzll(pieces[BlackKing]);
+
+        u64 attackers = 0ULL;
+        if (pieces[BlackKing] & underAttack)
+        {
+            attackers |= GetKnightsAttacksBBs(pieces[BlackKing]) & pieces[WhiteKnights];
+            attackers |= GetPseudoLegalBishopsBBs(pieces[BlackKing], 0xffffffffffffffff, all) & (pieces[WhiteBishops] | pieces[WhiteQueens]);
+            attackers |= GetPseudoLegalRooksBBs(pieces[BlackKing], 0xffffffffffffffff, all) & (pieces[WhiteRooks] | pieces[WhiteQueens]);
+
+            if (std::popcount(attackers) > 1)
+            {
+                GetLegalKingMoves(kingSquare, plKing, moves);
+                return;
+            }
+            else
+            {
+                int attackerSquare = __builtin_ctzll(attackers);
+                u64 posibleMovesMask = BetweenSquaresTable[kingSquare][attackerSquare] | attackers;
+
+                u64f unpinedPieces[4];
+                unpinedPieces[PinablePieces::Pawns] = pieces[BlackPawns];
+                unpinedPieces[PinablePieces::Bishops] = pieces[BlackBishops];
+                unpinedPieces[PinablePieces::Rooks] = pieces[BlackRooks];
+                unpinedPieces[PinablePieces::Queens] = pieces[BlackQueens];
+                u64 notUnpinPiecesMask = ~ResolveBlackPinedPieces(pieces, kingSquare, black, white, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
+
+                GetLegalBlackPawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, white, pieces[Empassants], posibleMovesMask, moves);
+                GetLegalKnightsMoves(pieces[BlackKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
+                GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
+                GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
+                GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
+                GetLegalKingMoves(kingSquare, plKing, moves);
+            }
+        }
+        else
+        {
+            u64 posibleMovesMask = 0xffffffffffffffff;
+
+            u64f unpinedPieces[4];
+            unpinedPieces[PinablePieces::Pawns] = pieces[BlackPawns];
+            unpinedPieces[PinablePieces::Bishops] = pieces[BlackBishops];
+            unpinedPieces[PinablePieces::Rooks] = pieces[BlackRooks];
+            unpinedPieces[PinablePieces::Queens] = pieces[BlackQueens];
+            u64 notUnpinPiecesMask = ~ResolveBlackPinedPieces(pieces, kingSquare, black, white, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
+
+            GetLegalBlackPawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, white, pieces[Empassants], posibleMovesMask, moves);
+            GetLegalKnightsMoves(pieces[BlackKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
+            GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
+            GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
+            GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
+            GetLegalKingMoves(kingSquare, plKing, moves);
+            // TODO: dodanie roszad dla czarnych
+            return;
+        }
     }
 }
 
@@ -581,7 +367,7 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
     }
 }
 
-void MoveGenerator::GetLegalKingMovesFromBBs(int square, u64 movementBBs, std::queue<Move> &moves)
+void MoveGenerator::GetLegalKingMoves(int square, u64 movementBBs, std::queue<Move> &moves)
 {
     while (movementBBs)
     {
@@ -592,7 +378,6 @@ void MoveGenerator::GetLegalKingMovesFromBBs(int square, u64 movementBBs, std::q
     }
 }
 
-// TODO: Wymagana optymalizacja!
 void MoveGenerator::GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posibleMovesMask, std::queue<Move> &moves)
 {
     knights;
@@ -700,4 +485,293 @@ void MoveGenerator::GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers,
             moves.push(move);
         }
     }
+}
+
+u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u64 white, u64 black,
+                                           u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], std::queue<Move> &moves)
+{
+    u64 horizontalBlockersMask = RookMagicBitboards::GetBlockersMask(kingSquare);
+    u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(kingSquare);
+    u64 horizontalPinsMask = RookMagicBitboards::GetMovesMask(kingSquare, black & horizontalBlockersMask);
+    u64 diagonalPinsMask = BishopMagicBitboards::GetMovesMask(kingSquare, black & diagonalBlockersMask);
+    u64 notUnpinPiecesMask = ~(horizontalPinsMask | diagonalPinsMask);
+
+    u64 temp = horizontalPinsMask & pieces[BlackRooks];
+    while (temp)
+    {
+        int enemySquare = __builtin_ctzll(temp);
+        temp &= temp - 1;
+
+        u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
+        if (std::popcount(posiblePinLine & white) == 1)
+        {
+            u64 pinned_piece;
+            if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinLine))
+            {
+                // not generating moves for piece becos thera are none
+                unpinedPieces[PinablePieces::Bishops] ^= pinned_piece;
+            }
+
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Pawns] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Pawns] ^= pinned_piece;
+                GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinLine & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Rooks] ^= pinned_piece;
+                GetLegalRooksMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Queens] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Queens] ^= pinned_piece;
+                GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
+            }
+        }
+    }
+
+    temp = horizontalPinsMask & pieces[BlackQueens];
+    while (temp)
+    {
+        int enemySquare = __builtin_ctzll(temp);
+        temp &= temp - 1;
+
+        u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
+        if (std::popcount(posiblePinLine & white) == 1)
+        {
+            u64 pinned_piece;
+            if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Bishops] ^= pinned_piece;
+            }
+
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Pawns] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Pawns] ^= pinned_piece;
+                GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinLine & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Rooks] ^= pinned_piece;
+                GetLegalRooksMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Queens] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Queens] ^= pinned_piece;
+                GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
+            }
+        }
+    }
+
+    temp = diagonalPinsMask & pieces[BlackBishops];
+    while (temp)
+    {
+        int enemySquare = __builtin_ctzll(temp);
+        temp &= temp - 1;
+
+        u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
+        if (std::popcount(posiblePinDiagonal & white) == 1)
+        {
+            u64 pinned_piece;
+            if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Rooks] ^= pinned_piece;
+            }
+
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Pawns] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Pawns] ^= pinned_piece;
+                GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinDiagonal & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Bishops] ^= pinned_piece;
+                GetLegalBishopsMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Queens] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Queens] ^= pinned_piece;
+                GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
+            }
+        }
+    }
+
+    temp = diagonalPinsMask & pieces[BlackQueens];
+    while (temp)
+    {
+        int enemySquare = __builtin_ctzll(temp);
+        temp &= temp - 1;
+
+        u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
+        if (std::popcount(posiblePinDiagonal & white) == 1)
+        {
+            u64 pinned_piece;
+            if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Rooks] ^= pinned_piece;
+            }
+
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Pawns] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Pawns] ^= pinned_piece;
+                GetLegalWhitePawnsMoves(pinned_piece, empty, black, pieces[Empassants], posiblePinDiagonal & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Bishops] ^= pinned_piece;
+                GetLegalBishopsMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Queens] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Queens] ^= pinned_piece;
+                GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
+            }
+        }
+    }
+
+    return horizontalPinsMask | diagonalPinsMask;
+}
+
+u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u64 white, u64 black,
+                                           u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], std::queue<Move> &moves)
+{
+    u64 horizontalBlockersMask = RookMagicBitboards::GetBlockersMask(kingSquare);
+    u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(kingSquare);
+    u64 horizontalPinsMask = RookMagicBitboards::GetMovesMask(kingSquare, white & horizontalBlockersMask);
+    u64 diagonalPinsMask = BishopMagicBitboards::GetMovesMask(kingSquare, white & diagonalBlockersMask);
+    u64 notUnpinPiecesMask = ~(horizontalPinsMask | diagonalPinsMask);
+
+    u64 temp = horizontalPinsMask & pieces[WhiteRooks];
+    while (temp)
+    {
+        int enemySquare = __builtin_ctzll(temp);
+        temp &= temp - 1;
+
+        u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
+        if (std::popcount(posiblePinLine & black) == 1)
+        {
+            u64 pinned_piece;
+            if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Bishops] ^= pinned_piece;
+            }
+
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Pawns] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Pawns] ^= pinned_piece;
+                GetLegalBlackPawnsMoves(pinned_piece, empty, white, pieces[Empassants], posiblePinLine & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Rooks] ^= pinned_piece;
+                GetLegalRooksMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Queens] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Queens] ^= pinned_piece;
+                GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
+            }
+        }
+    }
+
+    temp = horizontalPinsMask & pieces[WhiteQueens];
+    while (temp)
+    {
+        int enemySquare = __builtin_ctzll(temp);
+        temp &= temp - 1;
+
+        u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
+        if (std::popcount(posiblePinLine & black) == 1)
+        {
+            u64 pinned_piece;
+            if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Bishops] ^= pinned_piece;
+            }
+
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Pawns] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Pawns] ^= pinned_piece;
+                GetLegalBlackPawnsMoves(pinned_piece, empty, white, pieces[Empassants], posiblePinLine & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Rooks] ^= pinned_piece;
+                GetLegalRooksMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Queens] & posiblePinLine))
+            {
+                unpinedPieces[PinablePieces::Queens] ^= pinned_piece;
+                GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinLine & posibleMovesMask, moves);
+            }
+        }
+    }
+
+    temp = diagonalPinsMask & pieces[WhiteBishops];
+    while (temp)
+    {
+        int enemySquare = __builtin_ctzll(temp);
+        temp &= temp - 1;
+
+        u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
+        if (std::popcount(posiblePinDiagonal & black) == 1)
+        {
+            u64 pinned_piece;
+            if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Rooks] ^= pinned_piece;
+            }
+
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Pawns] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Pawns] ^= pinned_piece;
+                GetLegalBlackPawnsMoves(pinned_piece, empty, white, pieces[Empassants], posiblePinDiagonal & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Bishops] ^= pinned_piece;
+                GetLegalBishopsMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Queens] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Queens] ^= pinned_piece;
+                GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
+            }
+        }
+    }
+
+    temp = diagonalPinsMask & pieces[WhiteQueens];
+    while (temp)
+    {
+        int enemySquare = __builtin_ctzll(temp);
+        temp &= temp - 1;
+
+        u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
+        if (std::popcount(posiblePinDiagonal & black) == 1)
+        {
+            u64 pinned_piece;
+            if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Rooks] ^= pinned_piece;
+            }
+
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Pawns] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Pawns] ^= pinned_piece;
+                GetLegalBlackPawnsMoves(pinned_piece, empty, white, pieces[Empassants], posiblePinDiagonal & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Bishops] ^= pinned_piece;
+                GetLegalBishopsMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
+            }
+            else if ((pinned_piece = unpinedPieces[PinablePieces::Queens] & posiblePinDiagonal))
+            {
+                unpinedPieces[PinablePieces::Queens] ^= pinned_piece;
+                GetLegalQueensMoves(pinned_piece, notAllay, all, posiblePinDiagonal & posibleMovesMask, moves);
+            }
+        }
+    }
+
+    return horizontalPinsMask | diagonalPinsMask;
 }
