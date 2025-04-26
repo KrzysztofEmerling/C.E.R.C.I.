@@ -3,6 +3,8 @@
 #include "MagicBitboards/BishopMagicBitboards.h"
 #include <queue>
 
+#include <iostream>
+
 void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &moves)
 {
     const u64f *pieces = state.GetBBs();
@@ -61,7 +63,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
                 unpinedPieces[PinablePieces::Bishops] = pieces[WhiteBishops];
                 unpinedPieces[PinablePieces::Rooks] = pieces[WhiteRooks];
                 unpinedPieces[PinablePieces::Queens] = pieces[WhiteQueens];
-                u64 notUnpinPiecesMask = ~ResolveWhitePinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
+                u64 notUnpinPiecesMask = ResolveWhitePinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
                 GetLegalWhitePawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, black, pieces[Empassants], posibleMovesMask, moves);
                 GetLegalKnightsMoves(pieces[WhiteKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
@@ -80,10 +82,10 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
             unpinedPieces[PinablePieces::Bishops] = pieces[WhiteBishops];
             unpinedPieces[PinablePieces::Rooks] = pieces[WhiteRooks];
             unpinedPieces[PinablePieces::Queens] = pieces[WhiteQueens];
-            u64 notUnpinPiecesMask = ~ResolveWhitePinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
+            u64 notPinPiecesMask = ResolveWhitePinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
             GetLegalWhitePawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, black, pieces[Empassants], posibleMovesMask, moves);
-            GetLegalKnightsMoves(pieces[WhiteKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
+            GetLegalKnightsMoves(pieces[WhiteKnights] & notPinPiecesMask, notAllay, posibleMovesMask, moves);
             GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
             GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
             GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
@@ -133,7 +135,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
                 unpinedPieces[PinablePieces::Bishops] = pieces[BlackBishops];
                 unpinedPieces[PinablePieces::Rooks] = pieces[BlackRooks];
                 unpinedPieces[PinablePieces::Queens] = pieces[BlackQueens];
-                u64 notUnpinPiecesMask = ~ResolveBlackPinedPieces(pieces, kingSquare, black, white, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
+                u64 notUnpinPiecesMask = ResolveBlackPinedPieces(pieces, kingSquare, black, white, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
                 GetLegalBlackPawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, white, pieces[Empassants], posibleMovesMask, moves);
                 GetLegalKnightsMoves(pieces[BlackKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
@@ -152,7 +154,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
             unpinedPieces[PinablePieces::Bishops] = pieces[BlackBishops];
             unpinedPieces[PinablePieces::Rooks] = pieces[BlackRooks];
             unpinedPieces[PinablePieces::Queens] = pieces[BlackQueens];
-            u64 notUnpinPiecesMask = ~ResolveBlackPinedPieces(pieces, kingSquare, black, white, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
+            u64 notUnpinPiecesMask = ResolveBlackPinedPieces(pieces, kingSquare, black, white, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
             GetLegalBlackPawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, white, pieces[Empassants], posibleMovesMask, moves);
             GetLegalKnightsMoves(pieces[BlackKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
@@ -184,22 +186,14 @@ u64 MoveGenerator::GetBlackPawnsAttacksBBs(u64f pawns)
 u64 MoveGenerator::GetKnightsAttacksBBs(u64f knights)
 {
     // 2 w górę 1 w prawo
-    return (((NOT_COL_H & knights) << 17) |
-            // 2 w górę 1 w lewo
-            ((NOT_COL_A & knights) << 15) |
-            // 1 w górę 2 w prawo
-            ((NOT_COLS_AB & knights) << 10) |
-            // 1 w gurę 2 w lewo
-            ((NOT_COLS_GH & knights) << 6) |
-
-            // 2 w dół 1 w prawo
-            ((NOT_COL_H & knights) >> 17) |
-            // 2 w dół 1 w lewo
-            ((NOT_COL_A & knights) >> 15) |
-            // 1 w dół 2 w prawo
-            ((NOT_COLS_AB & knights) >> 10) |
-            // 1 w dół 2 w lewo
-            ((NOT_COLS_GH & knights) >> 6));
+    return ((NOT_COL_H & knights) << 17) |   // 2 up, 1 right ok
+           ((NOT_COL_A & knights) << 15) |   // 2 up, 1 left ok
+           ((NOT_COLS_GH & knights) << 10) | // 1 up, 2 right ok
+           ((NOT_COLS_AB & knights) << 6) |  // 1 up, 2 left ok
+           ((NOT_COL_H & knights) >> 15) |   // 2 down, 1 right
+           ((NOT_COL_A & knights) >> 17) |   // 2 down, 1 left
+           ((NOT_COLS_GH & knights) >> 6) |  // 1 down, 2 right
+           ((NOT_COLS_AB & knights) >> 10);  // 1 down, 2 left;
 }
 
 u64 MoveGenerator::GetPseudoLegalBishopsBBs(u64f bishops, u64 notAllay, u64 blockers)
@@ -282,8 +276,8 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u6
     u64 doublePush = ((singlePush & WHITE_DUBLE_PUSH) << 8) & empty & posibleMovesMask;
 
     black |= enpassants;
-    u64 leftAttack = (pawns << 7) & black & NOT_COL_A & posibleMovesMask;
-    u64 rightAttack = (pawns << 9) & black & NOT_COL_H & posibleMovesMask;
+    u64 leftAttack = ((pawns & NOT_COL_A) << 7) & black & posibleMovesMask;
+    u64 rightAttack = ((pawns & NOT_COL_H) << 9) & black & posibleMovesMask;
 
     while (singlePush)
     {
@@ -327,8 +321,8 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
     u64 doublePush = ((singlePush & BLACK_DUBLE_PUSH) >> 8) & empty & posibleMovesMask;
 
     white |= enpassants;
-    u64 leftAttack = (pawns >> 7) & white & NOT_COL_A & posibleMovesMask;
-    u64 rightAttack = (pawns >> 9) & white & NOT_COL_H & posibleMovesMask;
+    u64 leftAttack = ((pawns & NOT_COL_A) << 7) & white & posibleMovesMask;
+    u64 rightAttack = ((pawns & NOT_COL_H) << 9) & white & posibleMovesMask;
 
     while (singlePush)
     {
@@ -380,7 +374,6 @@ void MoveGenerator::GetLegalKingMoves(int square, u64 movementBBs, std::queue<Mo
 
 void MoveGenerator::GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posibleMovesMask, std::queue<Move> &moves)
 {
-    knights;
     while (knights)
     {
         int square = __builtin_ctzll(knights);
@@ -388,23 +381,7 @@ void MoveGenerator::GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posible
 
         u64 temp = BitboardsIndecies[square];
 
-        u64 destSquaresBBs = (((NOT_COL_H & temp) << 17) |
-                              // 2 w górę 1 w lewo
-                              ((NOT_COL_A & temp) << 15) |
-                              // 1 w górę 2 w prawo
-                              ((NOT_COLS_AB & temp) << 10) |
-                              // 1 w gurę 2 w lewo
-                              ((NOT_COLS_GH & temp) << 6) |
-
-                              // 2 w dół 1 w prawo
-                              ((NOT_COL_H & temp) >> 17) |
-                              // 2 w dół 1 w lewo
-                              ((NOT_COL_A & temp) >> 15) |
-                              // 1 w dół 2 w prawo
-                              ((NOT_COLS_AB & temp) >> 10) |
-                              // 1 w dół 2 w lewo
-                              ((NOT_COLS_GH & temp) >> 6)) &
-                             notAllay & posibleMovesMask;
+        u64 destSquaresBBs = GetKnightsAttacksBBs(temp) & notAllay & posibleMovesMask;
 
         while (destSquaresBBs)
         {
@@ -474,7 +451,7 @@ void MoveGenerator::GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers,
         u64 rookBlockersMask = RookMagicBitboards::GetBlockersMask(square);
         u64 bishopBlockersMask = BishopMagicBitboards::GetBlockersMask(square);
 
-        u64 queenMoves = RookMagicBitboards::GetMovesMask(square, blockers & rookBlockersMask);
+        u64 queenMoves = RookMagicBitboards::GetMovesMask(square, blockers & rookBlockersMask) & notAllay & posibleMovesMask;
         queenMoves |= BishopMagicBitboards::GetMovesMask(square, blockers & bishopBlockersMask) & notAllay & posibleMovesMask;
 
         while (queenMoves)
@@ -494,7 +471,8 @@ u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u
     u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(kingSquare);
     u64 horizontalPinsMask = RookMagicBitboards::GetMovesMask(kingSquare, black & horizontalBlockersMask);
     u64 diagonalPinsMask = BishopMagicBitboards::GetMovesMask(kingSquare, black & diagonalBlockersMask);
-    u64 notUnpinPiecesMask = ~(horizontalPinsMask | diagonalPinsMask);
+    u64 notPinningLinesMask = ~(horizontalPinsMask | diagonalPinsMask);
+    u64 notPinnedPiecesMask = 0xffffffffffffffff;
 
     u64 temp = horizontalPinsMask & pieces[BlackRooks];
     while (temp)
@@ -505,6 +483,7 @@ u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u
         u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
         if (std::popcount(posiblePinLine & white) == 1)
         {
+            notPinnedPiecesMask ^= posiblePinLine;
             u64 pinned_piece;
             if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinLine))
             {
@@ -539,6 +518,7 @@ u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u
         u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
         if (std::popcount(posiblePinLine & white) == 1)
         {
+            notPinnedPiecesMask ^= posiblePinLine;
             u64 pinned_piece;
             if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinLine))
             {
@@ -572,6 +552,7 @@ u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u
         u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
         if (std::popcount(posiblePinDiagonal & white) == 1)
         {
+            notPinnedPiecesMask ^= posiblePinDiagonal;
             u64 pinned_piece;
             if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinDiagonal))
             {
@@ -605,6 +586,7 @@ u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u
         u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
         if (std::popcount(posiblePinDiagonal & white) == 1)
         {
+            notPinnedPiecesMask ^= posiblePinDiagonal;
             u64 pinned_piece;
             if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinDiagonal))
             {
@@ -629,7 +611,7 @@ u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u
         }
     }
 
-    return horizontalPinsMask | diagonalPinsMask;
+    return notPinnedPiecesMask;
 }
 
 u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u64 white, u64 black,
@@ -639,7 +621,8 @@ u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u
     u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(kingSquare);
     u64 horizontalPinsMask = RookMagicBitboards::GetMovesMask(kingSquare, white & horizontalBlockersMask);
     u64 diagonalPinsMask = BishopMagicBitboards::GetMovesMask(kingSquare, white & diagonalBlockersMask);
-    u64 notUnpinPiecesMask = ~(horizontalPinsMask | diagonalPinsMask);
+    u64 notPinningLinesMask = ~(horizontalPinsMask | diagonalPinsMask);
+    u64 notPinnedPiecesMask = 0xffffffffffffffff;
 
     u64 temp = horizontalPinsMask & pieces[WhiteRooks];
     while (temp)
@@ -650,6 +633,7 @@ u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u
         u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
         if (std::popcount(posiblePinLine & black) == 1)
         {
+            notPinnedPiecesMask ^= posiblePinLine;
             u64 pinned_piece;
             if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinLine))
             {
@@ -683,6 +667,7 @@ u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u
         u64 posiblePinLine = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
         if (std::popcount(posiblePinLine & black) == 1)
         {
+            notPinnedPiecesMask ^= posiblePinLine;
             u64 pinned_piece;
             if ((pinned_piece = unpinedPieces[PinablePieces::Bishops] & posiblePinLine))
             {
@@ -716,6 +701,7 @@ u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u
         u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
         if (std::popcount(posiblePinDiagonal & black) == 1)
         {
+            notPinnedPiecesMask ^= posiblePinDiagonal;
             u64 pinned_piece;
             if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinDiagonal))
             {
@@ -749,6 +735,7 @@ u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u
         u64 posiblePinDiagonal = BetweenSquaresTable[kingSquare][enemySquare] | BitboardsIndecies[enemySquare];
         if (std::popcount(posiblePinDiagonal & black) == 1)
         {
+            notPinnedPiecesMask ^= posiblePinDiagonal;
             u64 pinned_piece;
             if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinDiagonal))
             {
@@ -773,5 +760,5 @@ u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u
         }
     }
 
-    return horizontalPinsMask | diagonalPinsMask;
+    return notPinnedPiecesMask;
 }
