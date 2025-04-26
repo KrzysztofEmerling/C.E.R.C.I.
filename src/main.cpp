@@ -1,39 +1,47 @@
-#include<iostream>
-#include <cstdlib> 
+#include <iostream>
+#include <cstdlib>
 
 #include "MoveGenerator/BoardState.h"
+#include "Debuging/Debug.h"
 
+int main()
+{
 
+    BoardState chessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
-int main() {
-    //rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq – 0 1
-    //rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 1 3
-    BoardState chessBoard("rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 1 3");
-
-    while (true) {
+    while (true)
+    {
         // Rysowanie planszy
         chessBoard.DrawBoard();
 
-
-        String move_notation;
-        std::cout << "\nPodaj ruch (np. e2e4) lub wpisz #end, aby zakończyć: ";
-        std::cin >> move_notation;
-        if (move_notation == "#end") {
+        String moveNotation;
+        std::cout << "\nPodaj ruch (np. e2e4), \"p 6\" żeby wypisać podzielone ruchy lub wpisz end, aby zakończyć: ";
+        std::cin >> moveNotation;
+        if (moveNotation == "end")
+        {
             std::cout << "Gra zakończona." << std::endl;
             break;
         }
-
-        if (move_notation.size() != 4) {
+        else if (moveNotation[0] == 'p')
+        {
+            String numberStr = moveNotation.substr(1, 3);
+            Debug::Perft(chessBoard, std::stoi(numberStr));
+        }
+        else if (moveNotation.size() != 4)
+        {
             std::cout << "Niepoprawny format ruchu! Spróbuj ponownie.\n";
             continue;
         }
-        chessBoard.MakeMove(ParseMove(move_notation.c_str()));
+        else
+        {
+            chessBoard.MakeMove(Move(SquareIndex[moveNotation[0] - 'a'][moveNotation[1] - '1'], SquareIndex[moveNotation[2] - 'a'][moveNotation[3] - '1']));
 
-        #ifdef _WIN32
+#ifdef _WIN32
             system("cls");
-        #else
+#else
             system("clear");
-        #endif
+#endif
+        }
     }
 
     return 0;

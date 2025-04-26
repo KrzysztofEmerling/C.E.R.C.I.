@@ -8,17 +8,18 @@ set(CMAKE_CXX_STANDARD 23)
 option(BUILD_TESTS "Build the tests" OFF)
 
 # Znajdź wszystkie pliki źródłowe
+file(GLOB_RECURSE DEBUG_FILES src/Debuging/*.cpp)
 file(GLOB_RECURSE MG_FILES src/MoveGenerator/*.cpp)
 file(GLOB_RECURSE TEST_FILES tests/MoveGenerator/*.cpp)
 
 # Jeśli budujemy testy
 if(BUILD_TESTS)
     message(STATUS "Building tests")
-    add_executable(${PROJECT_NAME} ${MG_FILES} ${TEST_FILES} tests/tests.cpp)
+    add_executable(${PROJECT_NAME} ${MG_FILES} ${TEST_FILES} ${DEBUG_FILES} tests/tests.cpp)
     target_include_directories(${PROJECT_NAME} PRIVATE src tests)
 else()
     message(STATUS "Building application")
-    add_executable(${PROJECT_NAME} ${MG_FILES} src/main.cpp)
+    add_executable(${PROJECT_NAME} ${MG_FILES}  ${DEBUG_FILES} src/main.cpp)
     target_include_directories(${PROJECT_NAME} PRIVATE src)
 endif()
 
