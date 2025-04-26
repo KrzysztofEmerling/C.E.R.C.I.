@@ -4,16 +4,6 @@
 #include "BitboardsUtils.h"
 #include "BoardState.h"
 
-struct Move
-{
-    uint8_t uStartingSquere;
-    uint8_t uDestSquere;
-    uint8_t uPromotionPiece;
-
-    Move(uint8_t start, uint8_t dest, uint8_t promo) : uStartingSquere(start), uDestSquere(dest), uPromotionPiece(promo) {}
-    Move(uint8_t start, uint8_t dest) : uStartingSquere(start), uDestSquere(dest), uPromotionPiece(0) {}
-};
-
 class MoveGenerator
 {
 public:
