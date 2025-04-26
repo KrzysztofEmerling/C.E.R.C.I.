@@ -69,8 +69,8 @@ void BoardState::DrawBoard() const
 
 void BoardState::MakeMove(Move move)
 {
-    u64 starting_pos = BitboardsIndecies[move.uStartingSquere];
-    u64 dest_pos = BitboardsIndecies[move.uDestSquere];
+    u64 starting_pos = BitboardsIndecies[move.startingSquere];
+    u64 dest_pos = BitboardsIndecies[move.destSquere];
 
     int fig_to_move = -1;
     int fig_to_capture = -1;
