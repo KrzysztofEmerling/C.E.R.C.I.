@@ -22,7 +22,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
     u64 oponentQueensAttacks;
     u64 plKing, oponentKingAttacks;
 
-    if (flags.uWhiteOnMove)
+    if (flags.whiteOnMove)
     {
         u64 notAllay = ~white;
         u64 notOponent = ~black;
