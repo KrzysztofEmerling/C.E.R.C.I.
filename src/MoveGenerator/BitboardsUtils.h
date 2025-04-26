@@ -45,12 +45,12 @@ enum BitBoardsIndecis
 
 struct Move
 {
-    uint8_t uStartingSquere;
-    uint8_t uDestSquere;
-    uint8_t uPromotionPiece;
+    uint8_t startingSquere;
+    uint8_t destSquere;
+    uint8_t promotionPiece;
 
-    Move(uint8_t start, uint8_t dest, uint8_t promo) : uStartingSquere(start), uDestSquere(dest), uPromotionPiece(promo) {}
-    Move(uint8_t start, uint8_t dest) : uStartingSquere(start), uDestSquere(dest), uPromotionPiece(0) {}
+    Move(uint8_t start, uint8_t dest, uint8_t promo) : startingSquere(start), destSquere(dest), promotionPiece(promo) {}
+    Move(uint8_t start, uint8_t dest) : startingSquere(start), destSquere(dest), promotionPiece(0) {}
 };
 
 constexpr std::array<u64, 64> GenerateBitboardTable()
