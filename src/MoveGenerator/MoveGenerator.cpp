@@ -272,8 +272,9 @@ u64 MoveGenerator::GetPseudoLegalKingBBs(u64f king, u64 notAllay)
 // TODO: wymagane sprawdzenie związania po enpassancie
 void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves)
 {
-    u64 singlePush = (pawns << 8) & empty & posibleMovesMask;
-    u64 doublePush = ((singlePush & WHITE_DUBLE_PUSH) << 8) & empty & posibleMovesMask;
+    pawns &= posibleMovesMask;
+    u64 singlePush = (pawns << 8) & empty;
+    u64 doublePush = ((singlePush & WHITE_DUBLE_PUSH) << 8) & empty;
 
     black |= enpassants;
     u64 leftAttack = ((pawns & NOT_COL_A) << 7) & black & posibleMovesMask;
@@ -317,12 +318,13 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u6
 }
 void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves)
 {
-    u64 singlePush = (pawns >> 8) & empty & posibleMovesMask;
-    u64 doublePush = ((singlePush & BLACK_DUBLE_PUSH) >> 8) & empty & posibleMovesMask;
+    pawns &= posibleMovesMask;
+    u64 singlePush = (pawns >> 8) & empty;
+    u64 doublePush = ((singlePush & BLACK_DUBLE_PUSH) >> 8) & empty;
 
     white |= enpassants;
-    u64 leftAttack = ((pawns & NOT_COL_A) << 7) & white & posibleMovesMask;
-    u64 rightAttack = ((pawns & NOT_COL_H) << 9) & white & posibleMovesMask;
+    u64 leftAttack = ((pawns & NOT_COL_A) >> 9) & white & posibleMovesMask;
+    u64 rightAttack = ((pawns & NOT_COL_H) >> 7) & white & posibleMovesMask;
 
     while (singlePush)
     {
