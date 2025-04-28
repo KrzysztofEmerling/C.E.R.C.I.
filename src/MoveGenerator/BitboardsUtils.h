@@ -46,6 +46,7 @@ enum BitBoardsIndecis
 enum MovesFlags
 {
     NormalMove,
+    DoublePush,
     PromotionQueen,
     PromotionRook,
     PromotionKnight,

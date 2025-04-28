@@ -76,12 +76,33 @@ void BoardState::MakeMove(Move move)
     int fig_to_capture = -1;
     for (int i = 0; i < 12; i++)
     {
+        // zwykłe
         if (starting_pos & m_Pieces[i])
         {
             fig_to_move = i;
+            int startingSquere = move.startingSquere;
+            if (move.flags == DoublePush)
+            {
+                if (startingSquere < 16)
+                    m_Pieces[Empassants] = BitboardsIndecies[startingSquere + 8];
+                else
+                    m_Pieces[Empassants] = BitboardsIndecies[startingSquere - 8];
+            }
+
+            // TODO: Dodanie promocji
         }
+
+        // bicia
         else if (dest_pos & m_Pieces[i])
         {
+            if (move.flags = EmpassantMove)
+            {
+                int dest = move.destSquere;
+                if (dest < 24)
+                    m_Pieces[WhitePawns] ^= BitboardsIndecies[dest + 8];
+                else
+                    m_Pieces[BlackPawns] ^= BitboardsIndecies[dest - 8];
+            }
             fig_to_capture = i;
         }
     }

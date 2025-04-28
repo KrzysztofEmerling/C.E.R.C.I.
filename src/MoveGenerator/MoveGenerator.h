@@ -47,9 +47,8 @@ private:
 
     static inline constexpr u64 WHITE_DUBLE_PUSH = 0x0000000000FF0000;
     static inline constexpr u64 BLACK_DUBLE_PUSH = 0x0000FF0000000000;
-
-    // static inline constexpr u64 NOT_RANKS_7_8 = 0x0000FFFFFFFFFFFF;
-    // static inline constexpr u64 NOT_RANK_8 = 0x00FFFFFFFFFFFFFF;
+    static inline constexpr u64 WHITE_PROMOTION_LINE = 0xFF00000000000000;
+    static inline constexpr u64 BLACK_PROMOTION_LINE = 0x00000000000000FF;
 
     static inline constexpr u64 NOT_COL_H = 0x7F7F7F7F7F7F7F7F;
     static inline constexpr u64 NOT_COL_A = 0xFEFEFEFEFEFEFEFE;
