@@ -318,8 +318,9 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u6
 }
 void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves)
 {
-    u64 singlePush = (pawns >> 8) & empty & posibleMovesMask;
-    u64 doublePush = ((singlePush & BLACK_DUBLE_PUSH) >> 8) & empty & posibleMovesMask;
+    pawns &= posibleMovesMask;
+    u64 singlePush = (pawns >> 8) & empty;
+    u64 doublePush = ((singlePush & BLACK_DUBLE_PUSH) >> 8) & empty;
 
     white |= enpassants;
     u64 leftAttack = ((pawns & NOT_COL_A) >> 9) & white & posibleMovesMask;
