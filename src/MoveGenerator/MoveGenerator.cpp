@@ -45,6 +45,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
         u64 attackers = 0ULL;
         if (pieces[WhiteKing] & underAttack)
         {
+            attackers |= GetWhitePawnsAttacksBBs(pieces[BlackKing]) & pieces[BlackPawns];
             attackers |= GetKnightsAttacksBBs(pieces[WhiteKing]) & pieces[BlackKnights];
             attackers |= GetPseudoLegalBishopsBBs(pieces[WhiteKing], 0xffffffffffffffff, all) & (pieces[BlackBishops] | pieces[BlackQueens]);
             attackers |= GetPseudoLegalRooksBBs(pieces[WhiteKing], 0xffffffffffffffff, all) & (pieces[BlackRooks] | pieces[BlackQueens]);
@@ -117,6 +118,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
         u64 attackers = 0ULL;
         if (pieces[BlackKing] & underAttack)
         {
+            attackers |= GetBlackPawnsAttacksBBs(pieces[BlackKing]) & pieces[WhitePawns];
             attackers |= GetKnightsAttacksBBs(pieces[BlackKing]) & pieces[WhiteKnights];
             attackers |= GetPseudoLegalBishopsBBs(pieces[BlackKing], 0xffffffffffffffff, all) & (pieces[WhiteBishops] | pieces[WhiteQueens]);
             attackers |= GetPseudoLegalRooksBBs(pieces[BlackKing], 0xffffffffffffffff, all) & (pieces[WhiteRooks] | pieces[WhiteQueens]);

@@ -69,61 +69,115 @@ void BoardState::DrawBoard() const
 
 void BoardState::MakeMove(Move move)
 {
-    u64 starting_pos = BitboardsIndecies[move.startingSquere];
-    u64 dest_pos = BitboardsIndecies[move.destSquere];
+    u64 startingPos = BitboardsIndecies[move.startingSquere];
+    u64 destPos = BitboardsIndecies[move.destSquere];
 
-    int fig_to_move = -1;
-    int fig_to_capture = -1;
+    int figToMove = -1;
+    int figToCapture = -1;
+
     for (int i = 0; i < 12; i++)
     {
-        // zwykłe
-        if (starting_pos & m_Pieces[i])
-        {
-            fig_to_move = i;
-            int startingSquere = move.startingSquere;
-            if (move.flags == DoublePush)
-            {
-                if (startingSquere < 16)
-                    m_Pieces[Empassants] = BitboardsIndecies[startingSquere + 8];
-                else
-                    m_Pieces[Empassants] = BitboardsIndecies[startingSquere - 8];
-            }
-
-            // TODO: Dodanie promocji
-        }
-
-        // bicia
-        else if (dest_pos & m_Pieces[i])
-        {
-            if (move.flags = EmpassantMove)
-            {
-                int dest = move.destSquere;
-                if (dest < 24)
-                    m_Pieces[WhitePawns] ^= BitboardsIndecies[dest + 8];
-                else
-                    m_Pieces[BlackPawns] ^= BitboardsIndecies[dest - 8];
-            }
-            fig_to_capture = i;
-        }
+        if (startingPos & m_Pieces[i])
+            figToMove = i;
+        if (destPos & m_Pieces[i])
+            figToCapture = i;
     }
 
-    m_Pieces[fig_to_move] ^= dest_pos;
+    // Reset en passant square na początek ruchu
+    m_Pieces[Empassants] = 0ULL;
 
-    m_Pieces[fig_to_move] ^= starting_pos;
-
-    if (fig_to_capture > -1)
+    switch (move.flag)
     {
-        // m_Pieces[fig_to_capture] ^= dest_pos; w przypadku enpassanta doda pionka przeciwnikowi
-        m_Pieces[fig_to_capture] &= ~dest_pos;
+    case NormalMove:
+        // Przesuń pionek/figurę
+        m_Pieces[figToMove] &= ~startingPos;
+        m_Pieces[figToMove] |= destPos;
+
+        // Jeśli bicie, usuń zbitego
+        if (figToCapture > -1)
+        {
+            m_Pieces[figToCapture] &= ~destPos;
+            m_Flags.halfmoveClock = 0;
+        }
+        break;
+
+    case DoublePush:
+    {
+        // Przesuń pionka
+        m_Pieces[figToMove] &= ~startingPos;
+        m_Pieces[figToMove] |= destPos;
+
+        // Ustaw pole en passant
+        int direction = (figToMove == WhitePawns) ? -8 : 8;
+        int epSquare = move.destSquere + direction;
+        m_Pieces[Empassants] = BitboardsIndecies[epSquare];
+
         m_Flags.halfmoveClock = 0;
+        break;
     }
-    else if (fig_to_move == WhitePawns || fig_to_move == BlackPawns)
+
+    case PromotionQueen:
+    case PromotionRook:
+    case PromotionKnight:
+    case PromotionBishop:
+    {
+        int new_piece = -1;
+        switch (move.flag)
+        {
+        case PromotionQueen:
+            new_piece = (figToMove < 6) ? WhiteQueens : BlackQueens;
+            break;
+        case PromotionRook:
+            new_piece = (figToMove < 6) ? WhiteRooks : BlackRooks;
+            break;
+        case PromotionKnight:
+            new_piece = (figToMove < 6) ? WhiteKnights : BlackKnights;
+            break;
+        case PromotionBishop:
+            new_piece = (figToMove < 6) ? WhiteBishops : BlackBishops;
+            break;
+        }
+
+        // Usuń pionka z pola startowego
+        m_Pieces[figToMove] &= ~startingPos;
+
+        // Jeśli bicie, usuń zbitego
+        if (figToCapture > -1)
+        {
+            m_Pieces[figToCapture] &= ~destPos;
+            m_Flags.halfmoveClock = 0;
+        }
+
+        // Dodaj nową figurę na polu docelowym
+        m_Pieces[new_piece] |= destPos;
+        break;
+    }
+
+    case EmpassantMove:
+    {
+        // Usuń pionka z pola startowego
+        m_Pieces[figToMove] &= ~startingPos;
+        // Dodaj pionka na polu docelowym
+        m_Pieces[figToMove] |= destPos;
+
+        // Usuń zbitego pionka en passant
+        int epSquare = (figToMove == WhitePawns) ? move.destSquere - 8 : move.destSquere + 8;
+        int capturedPawn = (figToMove == WhitePawns) ? BlackPawns : WhitePawns;
+        m_Pieces[capturedPawn] &= ~BitboardsIndecies[epSquare];
+
         m_Flags.halfmoveClock = 0;
-    else
+        break;
+    }
+    }
+
+    // Aktualizacja półruchu jeśli nie zresetowano wcześniej
+    if (figToMove != WhitePawns && figToMove != BlackPawns && figToCapture == -1)
         m_Flags.halfmoveClock += 1;
 
-    if (!IsWhiteMove())
+    // Aktualizacja ruchu pełnego i zmiana strony
+    if (!m_Flags.whiteOnMove)
         m_Flags.moves += 1;
+
     m_Flags.whiteOnMove = !m_Flags.whiteOnMove;
 }
 
