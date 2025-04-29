@@ -28,18 +28,17 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
     if (flags.whiteOnMove)
     {
         u64 notAllay = ~white;
-        u64 notOponent = ~black;
         u64 allWithoutKing = all & (~pieces[WhiteKing]);
 
         oponentPawnsAttacks = GetBlackPawnsAttacksBBs(pieces[BlackPawns]);
         oponentKnightsAttacks = GetKnightsAttacksBBs(pieces[BlackKnights]);
-        oponentBishopsAttacks = GetPseudoLegalBishopsBBs(pieces[BlackBishops], notOponent, allWithoutKing);
-        oponentRooksAttacks = GetPseudoLegalRooksBBs(pieces[BlackRooks], notOponent, allWithoutKing);
-        oponentQueensAttacks = GetPseudoLegalQueensBBs(pieces[BlackQueens], notOponent, allWithoutKing);
-        oponentKingAttacks = GetPseudoLegalKingBBs(pieces[BlackKing], notOponent);
+        oponentBishopsAttacks = GetPseudoLegalBishopsBBs(pieces[BlackBishops], allWithoutKing);
+        oponentRooksAttacks = GetPseudoLegalRooksBBs(pieces[BlackRooks], allWithoutKing);
+        oponentQueensAttacks = GetPseudoLegalQueensBBs(pieces[BlackQueens], allWithoutKing);
+        oponentKingAttacks = GetPseudoLegalKingBBs(pieces[BlackKing]);
         u64 underAttack = oponentPawnsAttacks | oponentKnightsAttacks | oponentBishopsAttacks | oponentRooksAttacks | oponentQueensAttacks | oponentKingAttacks;
 
-        plKing = GetPseudoLegalKingBBs(pieces[WhiteKing], notAllay) & (~underAttack);
+        plKing = GetPseudoLegalKingBBs(pieces[WhiteKing]) & notAllay & (~underAttack);
         int kingSquare = __builtin_ctzll(pieces[WhiteKing]);
 
         u64 attackers = 0ULL;
@@ -47,8 +46,8 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
         {
             attackers |= GetWhitePawnsAttacksBBs(pieces[BlackKing]) & pieces[BlackPawns];
             attackers |= GetKnightsAttacksBBs(pieces[WhiteKing]) & pieces[BlackKnights];
-            attackers |= GetPseudoLegalBishopsBBs(pieces[WhiteKing], 0xffffffffffffffff, all) & (pieces[BlackBishops] | pieces[BlackQueens]);
-            attackers |= GetPseudoLegalRooksBBs(pieces[WhiteKing], 0xffffffffffffffff, all) & (pieces[BlackRooks] | pieces[BlackQueens]);
+            attackers |= GetPseudoLegalBishopsBBs(pieces[WhiteKing], all) & (pieces[BlackBishops] | pieces[BlackQueens]);
+            attackers |= GetPseudoLegalRooksBBs(pieces[WhiteKing], all) & (pieces[BlackRooks] | pieces[BlackQueens]);
 
             if (std::popcount(attackers) > 1)
             {
@@ -93,26 +92,24 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
             GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
             GetLegalKingMoves(kingSquare, plKing, moves);
 
-            // TODO: dodanie roszad dla białych
-
+            GetLegalWhiteCasels(white, underAttack, flags.whiteShortCastelRights, flags.whiteLongCastelRights, moves);
             return;
         }
     }
     else
     {
         u64 notAllay = ~black;
-        u64 notOponent = ~white;
         u64 allWithoutKing = all & (~pieces[BlackKing]);
 
         oponentPawnsAttacks = GetWhitePawnsAttacksBBs(pieces[WhitePawns]);
         oponentKnightsAttacks = GetKnightsAttacksBBs(pieces[WhiteKnights]);
-        oponentBishopsAttacks = GetPseudoLegalBishopsBBs(pieces[WhiteBishops], notOponent, allWithoutKing);
-        oponentRooksAttacks = GetPseudoLegalRooksBBs(pieces[WhiteRooks], notOponent, allWithoutKing);
-        oponentQueensAttacks = GetPseudoLegalQueensBBs(pieces[WhiteQueens], notOponent, allWithoutKing);
-        oponentKingAttacks = GetPseudoLegalKingBBs(pieces[WhiteKing], notOponent);
+        oponentBishopsAttacks = GetPseudoLegalBishopsBBs(pieces[WhiteBishops], allWithoutKing);
+        oponentRooksAttacks = GetPseudoLegalRooksBBs(pieces[WhiteRooks], allWithoutKing);
+        oponentQueensAttacks = GetPseudoLegalQueensBBs(pieces[WhiteQueens], allWithoutKing);
+        oponentKingAttacks = GetPseudoLegalKingBBs(pieces[WhiteKing]);
         u64 underAttack = oponentPawnsAttacks | oponentKnightsAttacks | oponentBishopsAttacks | oponentRooksAttacks | oponentQueensAttacks | oponentKingAttacks;
 
-        plKing = GetPseudoLegalKingBBs(pieces[BlackKing], notAllay) & (~underAttack);
+        plKing = GetPseudoLegalKingBBs(pieces[BlackKing]) & notAllay & (~underAttack);
         int kingSquare = __builtin_ctzll(pieces[BlackKing]);
 
         u64 attackers = 0ULL;
@@ -120,8 +117,8 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
         {
             attackers |= GetBlackPawnsAttacksBBs(pieces[BlackKing]) & pieces[WhitePawns];
             attackers |= GetKnightsAttacksBBs(pieces[BlackKing]) & pieces[WhiteKnights];
-            attackers |= GetPseudoLegalBishopsBBs(pieces[BlackKing], 0xffffffffffffffff, all) & (pieces[WhiteBishops] | pieces[WhiteQueens]);
-            attackers |= GetPseudoLegalRooksBBs(pieces[BlackKing], 0xffffffffffffffff, all) & (pieces[WhiteRooks] | pieces[WhiteQueens]);
+            attackers |= GetPseudoLegalBishopsBBs(pieces[BlackKing], all) & (pieces[WhiteBishops] | pieces[WhiteQueens]);
+            attackers |= GetPseudoLegalRooksBBs(pieces[BlackKing], all) & (pieces[WhiteRooks] | pieces[WhiteQueens]);
 
             if (std::popcount(attackers) > 1)
             {
@@ -164,8 +161,9 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
             GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
             GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
             GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
+
             GetLegalKingMoves(kingSquare, plKing, moves);
-            // TODO: dodanie roszad dla czarnych
+            GetLegalBlackCasels(white, underAttack, flags.whiteShortCastelRights, flags.whiteLongCastelRights, moves);
             return;
         }
     }

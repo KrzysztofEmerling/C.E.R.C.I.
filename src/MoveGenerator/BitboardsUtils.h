@@ -51,7 +51,8 @@ enum MovesFlags
     PromotionRook,
     PromotionKnight,
     PromotionBishop,
-    EmpassantMove
+    EmpassantMove,
+    Castling
 };
 
 struct Move

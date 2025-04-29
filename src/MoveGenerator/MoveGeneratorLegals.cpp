@@ -260,3 +260,31 @@ void MoveGenerator::GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers,
         }
     }
 }
+
+void MoveGenerator::GetLegalWhiteCasels(u64 allay, u64 attacks, bool shortCastelRights, bool longCastelRights, std::queue<Move> &moves)
+{
+    attacks |= allay;
+    if (shortCastelRights && !(0x60 & attacks))
+    {
+        moves.push(Move(4, 7, Castling));
+    }
+
+    if (longCastelRights && !((0xc & attacks)) && !(0x2 & allay))
+    {
+        moves.push(Move(4, 0, Castling));
+    }
+}
+
+void MoveGenerator::GetLegalBlackCasels(u64 allay, u64 attacks, bool shortCaselRights, bool longCaselRights, std::queue<Move> &moves)
+{
+    attacks |= allay;
+    if (shortCaselRights && !(0x6000000000000000 & attacks))
+    {
+        moves.push(Move(60, 63, Castling));
+    }
+
+    if (longCaselRights && !((0xc00000000000000 & attacks)) && !(0x200000000000000 & allay))
+    {
+        moves.push(Move(60, 56, Castling));
+    }
+}
