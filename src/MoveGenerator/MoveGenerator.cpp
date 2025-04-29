@@ -92,7 +92,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
             GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
             GetLegalKingMoves(kingSquare, plKing, moves);
 
-            GetLegalWhiteCasels(white, underAttack, flags.whiteShortCastelRights, flags.whiteLongCastelRights, moves);
+            GetLegalWhiteCasels(all, underAttack, flags.whiteShortCastelRights, flags.whiteLongCastelRights, moves);
             return;
         }
     }
@@ -163,7 +163,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
             GetLegalQueensMoves(unpinedPieces[PinablePieces::Queens], notAllay, all, posibleMovesMask, moves);
 
             GetLegalKingMoves(kingSquare, plKing, moves);
-            GetLegalBlackCasels(white, underAttack, flags.whiteShortCastelRights, flags.whiteLongCastelRights, moves);
+            GetLegalBlackCasels(all, underAttack, flags.whiteShortCastelRights, flags.whiteLongCastelRights, moves);
             return;
         }
     }

@@ -261,30 +261,32 @@ void MoveGenerator::GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers,
     }
 }
 
-void MoveGenerator::GetLegalWhiteCasels(u64 allay, u64 attacks, bool shortCastelRights, bool longCastelRights, std::queue<Move> &moves)
+void MoveGenerator::GetLegalWhiteCasels(u64 all, u64 attacks, bool shortCastleRights, bool longCastleRights, std::queue<Move> &moves)
 {
-    attacks |= allay;
-    if (shortCastelRights && !(0x60 & attacks))
+    u64 occupiedOrAttacked = all | attacks;
+
+    if (shortCastleRights && !(WHITE_SHORT_CASTLE_MASK & occupiedOrAttacked))
     {
-        moves.push(Move(4, 7, Castling));
+        moves.push(Move(4, 6, Castling)); // e1 -> g1
     }
 
-    if (longCastelRights && !((0xc & attacks)) && !(0x2 & allay))
+    if (longCastleRights && !(WHITE_LONG_CASTLE_MASK & attacks) && !(WHITE_LONG_ROOK_BLOCK & all))
     {
-        moves.push(Move(4, 0, Castling));
+        moves.push(Move(4, 2, Castling)); // e1 -> c1
     }
 }
 
-void MoveGenerator::GetLegalBlackCasels(u64 allay, u64 attacks, bool shortCaselRights, bool longCaselRights, std::queue<Move> &moves)
+void MoveGenerator::GetLegalBlackCasels(u64 all, u64 attacks, bool shortCastleRights, bool longCastleRights, std::queue<Move> &moves)
 {
-    attacks |= allay;
-    if (shortCaselRights && !(0x6000000000000000 & attacks))
+    u64 occupiedOrAttacked = all | attacks;
+
+    if (shortCastleRights && !(BLACK_SHORT_CASTLE_MASK & occupiedOrAttacked))
     {
-        moves.push(Move(60, 63, Castling));
+        moves.push(Move(60, 62, Castling)); // e8 -> g8
     }
 
-    if (longCaselRights && !((0xc00000000000000 & attacks)) && !(0x200000000000000 & allay))
+    if (longCastleRights && !(BLACK_LONG_CASTLE_MASK & attacks) && !(BLACK_LONG_ROOK_BLOCK & all))
     {
-        moves.push(Move(60, 56, Castling));
+        moves.push(Move(60, 58, Castling)); // e8 -> c8
     }
 }

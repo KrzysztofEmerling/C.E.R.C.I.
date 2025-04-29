@@ -89,6 +89,33 @@ void BoardState::MakeMove(Move move)
     switch (move.flag)
     {
     case NormalMove:
+
+        // przypadki roszady
+        if (figToMove == WhiteKing)
+        {
+            m_Flags.whiteShortCastelRights = false;
+            m_Flags.whiteLongCastelRights = false;
+        }
+        else if (figToMove == WhiteRooks)
+        {
+            if (startingPos & 0x80)
+                m_Flags.whiteShortCastelRights = false;
+            else if (startingPos & 0x1)
+                m_Flags.whiteLongCastelRights = false;
+        }
+
+        else if (figToMove == BlackKing)
+        {
+            m_Flags.blackShortCastelRights = false;
+            m_Flags.blackLongCastelRights = false;
+        }
+        else if (figToMove == BlackRooks)
+        {
+            if (startingPos & 0x8000000000000000)
+                m_Flags.blackShortCastelRights = false;
+            else if (startingPos & 0x100000000000000)
+                m_Flags.blackLongCastelRights = false;
+        }
         // Przesuń pionek/figurę
         m_Pieces[figToMove] &= ~startingPos;
         m_Pieces[figToMove] |= destPos;
@@ -121,6 +148,7 @@ void BoardState::MakeMove(Move move)
     case PromotionKnight:
     case PromotionBishop:
     {
+        m_Flags.halfmoveClock = 0;
         int new_piece = -1;
         switch (move.flag)
         {
@@ -145,7 +173,6 @@ void BoardState::MakeMove(Move move)
         if (figToCapture > -1)
         {
             m_Pieces[figToCapture] &= ~destPos;
-            m_Flags.halfmoveClock = 0;
         }
 
         // Dodaj nową figurę na polu docelowym
@@ -168,15 +195,79 @@ void BoardState::MakeMove(Move move)
         m_Flags.halfmoveClock = 0;
         break;
     }
+
+    case Castling:
+        if (m_Flags.whiteOnMove)
+        {
+            m_Flags.whiteShortCastelRights = false;
+            m_Flags.whiteLongCastelRights = false;
+
+            if (move.destSquere == 7)
+            {
+                m_Pieces[WhiteKing] &= 0x10;
+                m_Pieces[WhiteKing] |= 0x40;
+
+                m_Pieces[WhiteRooks] &= 0x80;
+                m_Pieces[WhiteRooks] |= 0x20;
+            }
+            else
+            {
+                m_Pieces[WhiteKing] &= 0x10;
+                m_Pieces[WhiteKing] |= 0x4;
+
+                m_Pieces[WhiteRooks] &= 0x1;
+                m_Pieces[WhiteRooks] |= 0x8;
+            }
+        }
+        else
+        {
+            m_Flags.blackShortCastelRights = false;
+            m_Flags.blackLongCastelRights = false;
+
+            if (move.destSquere == 63)
+            {
+                m_Pieces[BlackKing] &= 0x1000000000000000;
+                m_Pieces[BlackKing] |= 0x4000000000000000;
+
+                m_Pieces[BlackRooks] &= 0x8000000000000000;
+                m_Pieces[BlackRooks] |= 0x2000000000000000;
+            }
+            else
+            {
+                m_Pieces[BlackKing] &= 0x1000000000000000;
+                m_Pieces[BlackKing] |= 0x400000000000000;
+
+                m_Pieces[BlackRooks] &= 0x100000000000000;
+                m_Pieces[BlackRooks] |= 0x800000000000000;
+            }
+        }
+        break;
     }
 
-    // Aktualizacja półruchu jeśli nie zresetowano wcześniej
-    if (figToMove != WhitePawns && figToMove != BlackPawns && figToCapture == -1)
-        m_Flags.halfmoveClock += 1;
+    // sprawdzenie zbicia wierzy w przypadku praw roszad
+    if (figToCapture == WhiteRooks)
+    {
+        if (destPos & 0x80)
+            m_Flags.whiteShortCastelRights = false;
+        else if (destPos & 0x1)
+            m_Flags.whiteLongCastelRights = false;
+    }
+    else if (figToCapture == BlackRooks)
+    {
+        if (destPos & 0x8000000000000000)
+            m_Flags.blackShortCastelRights = false;
+        else if (destPos & 0x100000000000000)
+            m_Flags.blackLongCastelRights = false;
+    }
 
     // Aktualizacja ruchu pełnego i zmiana strony
     if (!m_Flags.whiteOnMove)
         m_Flags.moves += 1;
+    if (figToMove != WhitePawns && figToCapture == -1)
+        m_Flags.halfmoveClock += 1;
+
+    else if (figToMove != BlackPawns && figToCapture == -1)
+        m_Flags.halfmoveClock += 1;
 
     m_Flags.whiteOnMove = !m_Flags.whiteOnMove;
 }
