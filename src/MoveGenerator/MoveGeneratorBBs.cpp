@@ -3,8 +3,6 @@
 #include "MagicBitboards/BishopMagicBitboards.h"
 #include <queue>
 
-#include <iostream>
-
 u64 MoveGenerator::GetWhitePawnsAttacksBBs(u64f pawns)
 {
     u64 leftAttack = (pawns & NOT_COL_A) << 7;
@@ -33,7 +31,7 @@ u64 MoveGenerator::GetKnightsAttacksBBs(u64f knights)
            ((NOT_COLS_AB & knights) >> 10);  // 1 down, 2 left;
 }
 
-u64 MoveGenerator::GetPseudoLegalBishopsBBs(u64f bishops, u64 notAllay, u64 blockers)
+u64 MoveGenerator::GetPseudoLegalBishopsBBs(u64f bishops, u64 blockers)
 {
     u64 moves = 0ULL;
     u64 tempBishops = bishops;
@@ -47,11 +45,11 @@ u64 MoveGenerator::GetPseudoLegalBishopsBBs(u64f bishops, u64 notAllay, u64 bloc
         u64 relevantBlockers = blockers & blockersMask;
 
         u64 bishopMoves = BishopMagicBitboards::GetMovesMask(square, relevantBlockers);
-        moves |= bishopMoves & notAllay;
+        moves |= bishopMoves;
     }
     return moves;
 }
-u64 MoveGenerator::GetPseudoLegalRooksBBs(u64f rooks, u64 notAllay, u64 blockers)
+u64 MoveGenerator::GetPseudoLegalRooksBBs(u64f rooks, u64 blockers)
 {
     u64 moves = 0ULL;
     u64 tempRooks = rooks;
@@ -65,11 +63,11 @@ u64 MoveGenerator::GetPseudoLegalRooksBBs(u64f rooks, u64 notAllay, u64 blockers
         u64 relevantBlockers = blockers & blockersMask;
 
         u64 rookMoves = RookMagicBitboards::GetMovesMask(square, relevantBlockers);
-        moves |= rookMoves & notAllay;
+        moves |= rookMoves;
     }
     return moves;
 }
-u64 MoveGenerator::GetPseudoLegalQueensBBs(u64f queens, u64 notAllay, u64 blockers)
+u64 MoveGenerator::GetPseudoLegalQueensBBs(u64f queens, u64 blockers)
 {
     u64 moves = 0ULL;
     u64 tempQueens = queens;
@@ -84,12 +82,12 @@ u64 MoveGenerator::GetPseudoLegalQueensBBs(u64f queens, u64 notAllay, u64 blocke
 
         u64 queenMoves = RookMagicBitboards::GetMovesMask(square, blockers & rookBlockersMask);
         queenMoves |= BishopMagicBitboards::GetMovesMask(square, blockers & bishopBlockersMask);
-        moves |= queenMoves & notAllay;
+        moves |= queenMoves;
     }
     return moves;
 }
 
-u64 MoveGenerator::GetPseudoLegalKingBBs(u64f king, u64 notAllay)
+u64 MoveGenerator::GetPseudoLegalKingBBs(u64f king)
 {
     u64 moves = 0ULL;
     moves |= (king << 8); // Up
@@ -103,5 +101,5 @@ u64 MoveGenerator::GetPseudoLegalKingBBs(u64f king, u64 notAllay)
     moves |= (king >> 7) & NOT_COL_A; // Down-Right
     moves |= (king >> 9) & NOT_COL_H; // Down-Left
 
-    return moves & notAllay;
+    return moves;
 }

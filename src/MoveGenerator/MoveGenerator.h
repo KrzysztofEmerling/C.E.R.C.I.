@@ -23,10 +23,10 @@ private:
 
     static u64 GetKnightsAttacksBBs(u64f knights);
 
-    static u64 GetPseudoLegalRooksBBs(u64f rooks, u64 notAllay, u64 blockers);
-    static u64 GetPseudoLegalBishopsBBs(u64f bishops, u64 notAllay, u64 blockers);
-    static u64 GetPseudoLegalQueensBBs(u64f queens, u64 notAllay, u64 blockers);
-    static u64 GetPseudoLegalKingBBs(u64f king, u64 notOponent);
+    static u64 GetPseudoLegalRooksBBs(u64f rooks, u64 blockers);
+    static u64 GetPseudoLegalBishopsBBs(u64f bishops, u64 blockers);
+    static u64 GetPseudoLegalQueensBBs(u64f queens, u64 blockers);
+    static u64 GetPseudoLegalKingBBs(u64f king);
 
     static void GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves);
     static void GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves);
@@ -38,6 +38,9 @@ private:
     static void GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u64 posibleMovesMask, std::queue<Move> &moves);
     static void GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 posibleMovesMask, std::queue<Move> &moves);
     static void GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 posibleMovesMask, std::queue<Move> &moves);
+
+    static void GetLegalWhiteCasels(u64 allay, u64 attacks, bool shortCastelRights, bool longCastelRights, std::queue<Move> &moves);
+    static void GetLegalBlackCasels(u64 allay, u64 attacks, bool shortCastelRights, bool longCastelRights, std::queue<Move> &moves);
 
     static u64 ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u64 white, u64 black,
                                        u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], std::queue<Move> &moves);
