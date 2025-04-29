@@ -57,6 +57,14 @@ private:
     static inline constexpr u64 NOT_COL_A = 0xFEFEFEFEFEFEFEFE;
     static inline constexpr u64 NOT_COLS_AB = 0xFCFCFCFCFCFCFCFC;
     static inline constexpr u64 NOT_COLS_GH = 0x3F3F3F3F3F3F3F3F;
+
+    static inline constexpr u64 WHITE_SHORT_CASTLE_MASK = 0x0000000000000060; // f1, g1
+    static inline constexpr u64 WHITE_LONG_CASTLE_MASK = 0x000000000000000E;  // b1, c1, d1
+    static inline constexpr u64 WHITE_LONG_ROOK_BLOCK = 0x0000000000000002;   // b1
+
+    static inline constexpr u64 BLACK_SHORT_CASTLE_MASK = 0x6000000000000000; // f8, g8
+    static inline constexpr u64 BLACK_LONG_CASTLE_MASK = 0x0E00000000000000;  // b8, c8, d8
+    static inline constexpr u64 BLACK_LONG_ROOK_BLOCK = 0x0200000000000000;   // b8
 };
 
 constexpr u64 GetBetweenSquaresConstexpr(int sq1, int sq2)
