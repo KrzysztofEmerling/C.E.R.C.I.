@@ -25,6 +25,7 @@ private:
 
 public:
     BoardState(String FENnotation);
+    BoardState(Flags flags, u64f (&pieces)[13]);
 
     void DrawBoard() const;
 
@@ -43,5 +44,5 @@ public:
 
     // unchecked
     void MakeMove(Move move);
-    void MakeMove(const char *move_notation);
+    bool MakeMove(const char *move_notation);
 };

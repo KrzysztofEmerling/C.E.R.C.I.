@@ -1,11 +1,20 @@
 #include "FENParcer.h"
 #include "BoardState.h"
+#include "MoveGenerator.h"
 
 #include <iostream>
 
 BoardState::BoardState(String FENnotation)
 {
     m_Flags = ParseFEN(FENnotation, m_Pieces);
+}
+
+BoardState::BoardState(Flags flags, u64f (&pieces)[13]) : m_Flags(flags)
+{
+    for (int i = 0; i < 13; i++)
+    {
+        m_Pieces[i] = pieces[i];
+    }
 }
 
 void BoardState::DrawBoard() const
@@ -202,20 +211,18 @@ void BoardState::MakeMove(Move move)
             m_Flags.whiteShortCastelRights = false;
             m_Flags.whiteLongCastelRights = false;
 
-            if (move.destSquere == 7)
+            if (move.destSquere == 6)
             {
-                m_Pieces[WhiteKing] &= 0x10;
-                m_Pieces[WhiteKing] |= 0x40;
+                m_Pieces[WhiteKing] = 0x40;
 
-                m_Pieces[WhiteRooks] &= 0x80;
+                m_Pieces[WhiteRooks] &= 0xffffffffffffff7f;
                 m_Pieces[WhiteRooks] |= 0x20;
             }
             else
             {
-                m_Pieces[WhiteKing] &= 0x10;
-                m_Pieces[WhiteKing] |= 0x4;
+                m_Pieces[WhiteKing] = 0x4;
 
-                m_Pieces[WhiteRooks] &= 0x1;
+                m_Pieces[WhiteRooks] &= 0xfffffffffffffffe;
                 m_Pieces[WhiteRooks] |= 0x8;
             }
         }
@@ -224,20 +231,18 @@ void BoardState::MakeMove(Move move)
             m_Flags.blackShortCastelRights = false;
             m_Flags.blackLongCastelRights = false;
 
-            if (move.destSquere == 63)
+            if (move.destSquere == 62)
             {
-                m_Pieces[BlackKing] &= 0x1000000000000000;
-                m_Pieces[BlackKing] |= 0x4000000000000000;
+                m_Pieces[BlackKing] = 0x4000000000000000;
 
-                m_Pieces[BlackRooks] &= 0x8000000000000000;
+                m_Pieces[BlackRooks] &= 0x7fffffffffffffff;
                 m_Pieces[BlackRooks] |= 0x2000000000000000;
             }
             else
             {
-                m_Pieces[BlackKing] &= 0x1000000000000000;
-                m_Pieces[BlackKing] |= 0x400000000000000;
+                m_Pieces[BlackKing] = 0x400000000000000;
 
-                m_Pieces[BlackRooks] &= 0x100000000000000;
+                m_Pieces[BlackRooks] &= 0xfeffffffffffffff;
                 m_Pieces[BlackRooks] |= 0x800000000000000;
             }
         }
@@ -272,8 +277,27 @@ void BoardState::MakeMove(Move move)
     m_Flags.whiteOnMove = !m_Flags.whiteOnMove;
 }
 
-void BoardState::MakeMove(const char *move_notation)
+bool BoardState::MakeMove(const char *move_notation)
 {
-    Move move(SquareIndex[move_notation[0] - 'a'][move_notation[1] - '1'], SquareIndex[move_notation[2] - 'a'][move_notation[3] - '1']);
-    MakeMove(move);
+    // Parsowanie z pełną obsługą promocji i flag
+    int from = SquareIndex[move_notation[0] - 'a'][move_notation[1] - '1'];
+    int to = SquareIndex[move_notation[2] - 'a'][move_notation[3] - '1'];
+
+    // Walidacja
+    std::queue<Move> moves;
+    BoardState board(m_Flags, m_Pieces);
+    MoveGenerator::GetLegalMoves(board, moves);
+
+    while (!moves.empty())
+    {
+        Move move = moves.front();
+        moves.pop();
+
+        if (move.startingSquere == from && move.destSquere == to)
+        {
+            MakeMove(move);
+            return true;
+        }
+    }
+    return false;
 }
