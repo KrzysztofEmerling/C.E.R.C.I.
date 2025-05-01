@@ -52,7 +52,15 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u6
         leftAttack &= leftAttack - 1;
 
         int from = dest - 7;
-        moves.push(Move(from, dest));
+        if (WHITE_PROMOTION_LINE & BitboardsIndecies[dest])
+        {
+            moves.push(Move(from, dest, PromotionQueen));
+            moves.push(Move(from, dest, PromotionRook));
+            moves.push(Move(from, dest, PromotionBishop));
+            moves.push(Move(from, dest, PromotionKnight));
+        }
+        else
+            moves.push(Move(from, dest));
     }
 
     while (rightAttack)
@@ -61,7 +69,15 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u6
         rightAttack &= rightAttack - 1;
 
         int from = dest - 9;
-        moves.push(Move(from, dest));
+        if (WHITE_PROMOTION_LINE & BitboardsIndecies[dest])
+        {
+            moves.push(Move(from, dest, PromotionQueen));
+            moves.push(Move(from, dest, PromotionRook));
+            moves.push(Move(from, dest, PromotionBishop));
+            moves.push(Move(from, dest, PromotionKnight));
+        }
+        else
+            moves.push(Move(from, dest));
     }
 
     while (leftEmpassant)
@@ -94,14 +110,15 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
     u64 leftEmpassant = ((pawns & NOT_COL_A) >> 9) & enpassants;
     u64 rightAttack = ((pawns & NOT_COL_H) >> 7) & white;
     u64 rightEmpassant = ((pawns & NOT_COL_H) >> 7) & enpassants;
-
+    // std::cout << "\n--------------------\n left empassant:" << leftEmpassant << ", right empassant:" << rightEmpassant
+    //           << "posible move mask:" << posibleMovesMask << ", \npawns:" << pawns << " empassant mask: " << enpassants << "\n--------------------\n";
     while (singlePush)
     {
         int dest = __builtin_ctzll(singlePush);
         singlePush &= singlePush - 1;
 
         int from = dest + 8;
-        if (WHITE_PROMOTION_LINE & BitboardsIndecies[dest])
+        if (BLACK_PROMOTION_LINE & BitboardsIndecies[dest])
         {
             moves.push(Move(from, dest, PromotionQueen));
             moves.push(Move(from, dest, PromotionRook));
@@ -127,7 +144,15 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
         leftAttack &= leftAttack - 1;
 
         int from = dest + 9;
-        moves.push(Move(from, dest));
+        if (BLACK_PROMOTION_LINE & BitboardsIndecies[dest])
+        {
+            moves.push(Move(from, dest, PromotionQueen));
+            moves.push(Move(from, dest, PromotionRook));
+            moves.push(Move(from, dest, PromotionBishop));
+            moves.push(Move(from, dest, PromotionKnight));
+        }
+        else
+            moves.push(Move(from, dest));
     }
 
     while (rightAttack)
@@ -136,7 +161,15 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
         rightAttack &= rightAttack - 1;
 
         int from = dest + 7;
-        moves.push(Move(from, dest));
+        if (BLACK_PROMOTION_LINE & BitboardsIndecies[dest])
+        {
+            moves.push(Move(from, dest, PromotionQueen));
+            moves.push(Move(from, dest, PromotionRook));
+            moves.push(Move(from, dest, PromotionBishop));
+            moves.push(Move(from, dest, PromotionKnight));
+        }
+        else
+            moves.push(Move(from, dest));
     }
 
     while (leftEmpassant)
@@ -144,7 +177,7 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
         int dest = __builtin_ctzll(leftEmpassant);
         leftEmpassant &= leftEmpassant - 1;
 
-        int from = dest - 7;
+        int from = dest + 9;
         moves.push(Move(from, dest, EmpassantMove));
     }
 
@@ -153,7 +186,7 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
         int dest = __builtin_ctzll(rightEmpassant);
         rightEmpassant &= rightEmpassant - 1;
 
-        int from = dest - 9;
+        int from = dest + 7;
         moves.push(Move(from, dest, EmpassantMove));
     }
 }
@@ -203,7 +236,6 @@ void MoveGenerator::GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blocker
         u64 relevantBlockers = blockers & blockersMask;
 
         u64 bishopMoves = BishopMagicBitboards::GetMovesMask(square, relevantBlockers) & notAllay & posibleMovesMask;
-
         while (bishopMoves)
         {
             int dest_square = __builtin_ctzll(bishopMoves);

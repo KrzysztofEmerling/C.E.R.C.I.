@@ -6,7 +6,8 @@
 
 int main()
 {
-
+    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    // r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
     BoardState chessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     while (true)
@@ -34,13 +35,17 @@ int main()
         }
         else
         {
-            chessBoard.MakeMove(Move(SquareIndex[moveNotation[0] - 'a'][moveNotation[1] - '1'], SquareIndex[moveNotation[2] - 'a'][moveNotation[3] - '1']));
+            while (!chessBoard.MakeMove(moveNotation.c_str()))
+            {
+                std::cout << "Niepoprawny ruch! Spróbuj ponownie.\n";
+                std::cin >> moveNotation;
+            };
 
-#ifdef _WIN32
-            system("cls");
-#else
-            system("clear");
-#endif
+            // #ifdef _WIN32
+            //             system("cls");
+            // #else
+            //             system("clear");
+            // #endif
         }
     }
 
