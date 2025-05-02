@@ -37,6 +37,9 @@ u64 Debug::Perft(BoardState &state, int depth)
 
     u64 totalNodes = 0;
 
+    // później usuń!
+    // std::cout << state.GetBB(Empassants) << std::endl;
+
     // Dla każdego ruchu pierwszego poziomu zliczamy nodes i wypisujemy
     while (!moves.empty())
     {
