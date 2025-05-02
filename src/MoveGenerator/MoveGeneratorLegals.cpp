@@ -80,20 +80,15 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u6
             moves.push(Move(from, dest));
     }
 
-    while (leftEmpassant)
+    if (leftEmpassant)
     {
         int dest = __builtin_ctzll(leftEmpassant);
-        leftEmpassant &= leftEmpassant - 1;
-
         int from = dest - 7;
         moves.push(Move(from, dest, EmpassantMove));
     }
-
-    while (rightEmpassant)
+    if (rightEmpassant)
     {
         int dest = __builtin_ctzll(rightEmpassant);
-        rightEmpassant &= rightEmpassant - 1;
-
         int from = dest - 9;
         moves.push(Move(from, dest, EmpassantMove));
     }
@@ -110,8 +105,7 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
     u64 leftEmpassant = ((pawns & NOT_COL_A) >> 9) & enpassants;
     u64 rightAttack = ((pawns & NOT_COL_H) >> 7) & white;
     u64 rightEmpassant = ((pawns & NOT_COL_H) >> 7) & enpassants;
-    // std::cout << "\n--------------------\n left empassant:" << leftEmpassant << ", right empassant:" << rightEmpassant
-    //           << "posible move mask:" << posibleMovesMask << ", \npawns:" << pawns << " empassant mask: " << enpassants << "\n--------------------\n";
+
     while (singlePush)
     {
         int dest = __builtin_ctzll(singlePush);
@@ -172,20 +166,15 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
             moves.push(Move(from, dest));
     }
 
-    while (leftEmpassant)
+    if (leftEmpassant)
     {
         int dest = __builtin_ctzll(leftEmpassant);
-        leftEmpassant &= leftEmpassant - 1;
-
         int from = dest + 9;
         moves.push(Move(from, dest, EmpassantMove));
     }
-
-    while (rightEmpassant)
+    if (rightEmpassant)
     {
         int dest = __builtin_ctzll(rightEmpassant);
-        rightEmpassant &= rightEmpassant - 1;
-
         int from = dest + 7;
         moves.push(Move(from, dest, EmpassantMove));
     }
@@ -307,7 +296,6 @@ void MoveGenerator::GetLegalWhiteCasels(u64 all, u64 attacks, bool shortCastleRi
         moves.push(Move(4, 2, Castling)); // e1 -> c1
     }
 }
-
 void MoveGenerator::GetLegalBlackCasels(u64 all, u64 attacks, bool shortCastleRights, bool longCastleRights, std::queue<Move> &moves)
 {
     u64 occupiedOrAttacked = all | attacks;
