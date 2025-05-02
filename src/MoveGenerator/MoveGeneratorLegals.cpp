@@ -5,16 +5,35 @@
 
 #include <iostream>
 
-// TODO: wymagane sprawdzenie związania po enpassancie
-void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves)
+bool MoveGenerator::EnPassantRevealsCheck(int kingSquare, int from, u64 all, u64 horizontalAttackers, u64 rankMask)
+{
+    u64 blockersMask = RookMagicBitboards::GetBlockersMask(kingSquare);
+    u64 attackers = horizontalAttackers & RookMagicBitboards::GetMovesMask(kingSquare, blockersMask & horizontalAttackers & rankMask);
+
+    while (attackers)
+    {
+        int attackerSquare = __builtin_ctzll(attackers);
+        attackers &= attackers - 1;
+
+        u64 edgeCasePinLine = BetweenSquaresTable[attackerSquare][kingSquare];
+        // std::cout << "edgeCasePinLine: " << edgeCasePinLine << "\nattackerSquare: " << attackerSquare << "\nkingSquare: " << kingSquare << "\nstd::popcount(edgeCasePinLine & all) : " << std::popcount(edgeCasePinLine & all) << std::endl;
+        if (std::popcount(edgeCasePinLine & all) == 2 && (edgeCasePinLine & BitboardsIndecies[from]))
+            return true;
+    }
+
+    return false;
+}
+
+void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64f king, u64 empty, u64 all, u64 black, u64 enpassants, u64 horizontalAttackers, u64 posibleMovesMask, std::queue<Move> &moves)
 {
 
+    // std::cout << "posibleMovesMask: " << posibleMovesMask << std::endl;
     u64 singlePush = (pawns << 8) & empty;
     u64 doublePush = ((singlePush & WHITE_DUBLE_PUSH) << 8) & empty & posibleMovesMask;
     singlePush &= posibleMovesMask;
 
     black &= posibleMovesMask;
-    enpassants &= posibleMovesMask;
+    enpassants &= posibleMovesMask << 8;
     u64 leftAttack = ((pawns & NOT_COL_A) << 7) & black;
     u64 leftEmpassant = ((pawns & NOT_COL_A) << 7) & enpassants;
     u64 rightAttack = ((pawns & NOT_COL_H) << 9) & black;
@@ -84,23 +103,31 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64 empty, u64 black, u6
     {
         int dest = __builtin_ctzll(leftEmpassant);
         int from = dest - 7;
+
+        if ((king & RANK5) && EnPassantRevealsCheck(__builtin_ctzll(king), from, all, horizontalAttackers, RANK5))
+            return;
+
         moves.push(Move(from, dest, EmpassantMove));
     }
     if (rightEmpassant)
     {
         int dest = __builtin_ctzll(rightEmpassant);
         int from = dest - 9;
+
+        if ((king & RANK5) && EnPassantRevealsCheck(__builtin_ctzll(king), from, all, horizontalAttackers, RANK5))
+            return;
+
         moves.push(Move(from, dest, EmpassantMove));
     }
 }
-void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u64 enpassants, u64 posibleMovesMask, std::queue<Move> &moves)
+void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64f king, u64 empty, u64 all, u64 white, u64 enpassants, u64 horizontalAttackers, u64 posibleMovesMask, std::queue<Move> &moves)
 {
     u64 singlePush = (pawns >> 8) & empty;
     u64 doublePush = ((singlePush & BLACK_DUBLE_PUSH) >> 8) & empty & posibleMovesMask;
     singlePush &= posibleMovesMask;
 
     white &= posibleMovesMask;
-    enpassants &= posibleMovesMask;
+    enpassants &= posibleMovesMask >> 8;
     u64 leftAttack = ((pawns & NOT_COL_A) >> 9) & white;
     u64 leftEmpassant = ((pawns & NOT_COL_A) >> 9) & enpassants;
     u64 rightAttack = ((pawns & NOT_COL_H) >> 7) & white;
@@ -170,12 +197,20 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64 empty, u64 white, u6
     {
         int dest = __builtin_ctzll(leftEmpassant);
         int from = dest + 9;
+
+        if ((king & RANK4) && EnPassantRevealsCheck(__builtin_ctzll(king), from, all, horizontalAttackers, RANK4))
+            return;
+
         moves.push(Move(from, dest, EmpassantMove));
     }
     if (rightEmpassant)
     {
         int dest = __builtin_ctzll(rightEmpassant);
         int from = dest + 7;
+
+        if ((king & RANK4) && EnPassantRevealsCheck(__builtin_ctzll(king), from, all, horizontalAttackers, RANK4))
+            return;
+
         moves.push(Move(from, dest, EmpassantMove));
     }
 }

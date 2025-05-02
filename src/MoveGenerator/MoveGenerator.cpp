@@ -29,6 +29,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
     {
         u64 notAllay = ~white;
         u64 allWithoutKing = all & (~pieces[WhiteKing]);
+        u64 horizontalAttackers = pieces[BlackQueens] | pieces[BlackRooks];
 
         oponentPawnsAttacks = GetBlackPawnsAttacksBBs(pieces[BlackPawns]);
         oponentKnightsAttacks = GetKnightsAttacksBBs(pieces[BlackKnights]);
@@ -66,7 +67,9 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
                 unpinedPieces[PinablePieces::Queens] = pieces[WhiteQueens];
                 u64 notUnpinPiecesMask = ResolveWhitePinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
-                GetLegalWhitePawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, black, pieces[Empassants], posibleMovesMask, moves);
+                GetLegalWhitePawnsMoves(unpinedPieces[PinablePieces::Pawns], pieces[WhiteKing],
+                                        empty, all, black, pieces[Empassants], horizontalAttackers, posibleMovesMask, moves);
+
                 GetLegalKnightsMoves(pieces[WhiteKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
                 GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
                 GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
@@ -85,7 +88,8 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
             unpinedPieces[PinablePieces::Queens] = pieces[WhiteQueens];
             u64 notPinPiecesMask = ResolveWhitePinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
-            GetLegalWhitePawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, black, pieces[Empassants], posibleMovesMask, moves);
+            GetLegalWhitePawnsMoves(unpinedPieces[PinablePieces::Pawns], pieces[WhiteKing],
+                                    empty, all, black, pieces[Empassants], horizontalAttackers, posibleMovesMask, moves);
             GetLegalKnightsMoves(pieces[WhiteKnights] & notPinPiecesMask, notAllay, posibleMovesMask, moves);
             GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
             GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
@@ -100,6 +104,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
     {
         u64 notAllay = ~black;
         u64 allWithoutKing = all & (~pieces[BlackKing]);
+        u64 horizontalAttackers = pieces[WhiteQueens] | pieces[WhiteRooks];
 
         oponentPawnsAttacks = GetWhitePawnsAttacksBBs(pieces[WhitePawns]);
         oponentKnightsAttacks = GetKnightsAttacksBBs(pieces[WhiteKnights]);
@@ -137,7 +142,8 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
                 unpinedPieces[PinablePieces::Queens] = pieces[BlackQueens];
                 u64 notUnpinPiecesMask = ResolveBlackPinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
-                GetLegalBlackPawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, white, pieces[Empassants], posibleMovesMask, moves);
+                GetLegalBlackPawnsMoves(unpinedPieces[PinablePieces::Pawns], pieces[BlackKing],
+                                        empty, all, white, pieces[Empassants], horizontalAttackers, posibleMovesMask, moves);
                 GetLegalKnightsMoves(pieces[BlackKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
                 GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
                 GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
@@ -156,7 +162,8 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
             unpinedPieces[PinablePieces::Queens] = pieces[BlackQueens];
             u64 notUnpinPiecesMask = ResolveBlackPinedPieces(pieces, kingSquare, white, black, all, notAllay, empty, posibleMovesMask, unpinedPieces, moves);
 
-            GetLegalBlackPawnsMoves(unpinedPieces[PinablePieces::Pawns], empty, white, pieces[Empassants], posibleMovesMask, moves);
+            GetLegalBlackPawnsMoves(unpinedPieces[PinablePieces::Pawns], pieces[BlackKing],
+                                    empty, all, white, pieces[Empassants], horizontalAttackers, posibleMovesMask, moves);
             GetLegalKnightsMoves(pieces[BlackKnights] & notUnpinPiecesMask, notAllay, posibleMovesMask, moves);
             GetLegalBishopsMoves(unpinedPieces[PinablePieces::Bishops], notAllay, all, posibleMovesMask, moves);
             GetLegalRooksMoves(unpinedPieces[PinablePieces::Rooks], notAllay, all, posibleMovesMask, moves);
