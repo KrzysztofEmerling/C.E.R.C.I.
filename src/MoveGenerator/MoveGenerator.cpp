@@ -213,7 +213,7 @@ u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u
                 {
                     int dest = __builtin_ctzll(doublePush);
                     int from = dest - 16;
-                    moves.push(Move(from, dest));
+                    moves.push(Move(from, dest, DoublePush));
                 }
             }
 
@@ -311,7 +311,7 @@ u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u
                 {
                     int dest = __builtin_ctzll(doublePush);
                     int from = dest + 16;
-                    moves.push(Move(from, dest));
+                    moves.push(Move(from, dest, DoublePush));
                 }
             }
             else if ((pinned_piece = unpinedPieces[PinablePieces::Rooks] & posiblePinLine))

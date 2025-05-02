@@ -92,14 +92,12 @@ void BoardState::MakeMove(Move move)
             figToCapture = i;
     }
 
-    // Reset en passant square na początek ruchu
-    m_Pieces[Empassants] = 0ULL;
-
     switch (move.flag)
     {
     case NormalMove:
 
         // przypadki roszady
+        m_Pieces[Empassants] = 0ULL;
         if (figToMove == WhiteKing)
         {
             m_Flags.whiteShortCastelRights = false;
@@ -157,6 +155,7 @@ void BoardState::MakeMove(Move move)
     case PromotionKnight:
     case PromotionBishop:
     {
+        m_Pieces[Empassants] = 0ULL;
         m_Flags.halfmoveClock = 0;
         int new_piece = -1;
         switch (move.flag)
@@ -191,6 +190,7 @@ void BoardState::MakeMove(Move move)
 
     case EmpassantMove:
     {
+        m_Pieces[Empassants] = 0ULL;
         // Usuń pionka z pola startowego
         m_Pieces[figToMove] &= ~startingPos;
         // Dodaj pionka na polu docelowym
@@ -206,6 +206,7 @@ void BoardState::MakeMove(Move move)
     }
 
     case Castling:
+        m_Pieces[Empassants] = 0ULL;
         if (m_Flags.whiteOnMove)
         {
             m_Flags.whiteShortCastelRights = false;
