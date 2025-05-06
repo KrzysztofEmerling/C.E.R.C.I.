@@ -3,6 +3,8 @@
 #include "MagicBitboards/BishopMagicBitboards.h"
 #include <queue>
 
+// #include <immintrin.h>
+
 #include <iostream>
 
 bool MoveGenerator::EnPassantRevealsCheck(int kingSquare, int from, u64 all, u64 horizontalAttackers, u64 rankMask)

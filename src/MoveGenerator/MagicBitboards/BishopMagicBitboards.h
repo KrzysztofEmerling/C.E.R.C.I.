@@ -1,6 +1,6 @@
 #pragma once
 #include <array>
-#include "../BitboardsUtils.h"
+#include "BoardUtils.h"
 
 class BishopMagicBitboards
 {

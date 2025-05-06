@@ -1,5 +1,6 @@
+#include "BoardUtils.h"
+
 #pragma once
-#include "BitboardsUtils.h"
 
 constexpr uint8_t SquareIndex[8][8] = {
     {0, 8, 16, 24, 32, 40, 48, 56},  // a1, a2, a3, ..., a8
