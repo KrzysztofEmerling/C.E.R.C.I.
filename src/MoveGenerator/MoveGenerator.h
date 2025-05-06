@@ -1,7 +1,7 @@
 #pragma once
 #include <queue>
 
-#include "BitboardsUtils.h"
+#include "BoardUtils.h"
 #include "BoardState.h"
 
 class MoveGenerator

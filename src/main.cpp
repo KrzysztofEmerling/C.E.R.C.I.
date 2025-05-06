@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "MoveGenerator/BoardState.h"
-#include "Debuging/Debug.h"
+#include "BoardState.h"
+#include "Perft.h"
 
 int main()
 {
@@ -27,7 +27,7 @@ int main()
         else if (moveNotation[0] == 'p')
         {
             String numberStr = moveNotation.substr(1, 3);
-            Debug::Perft(chessBoard, std::stoi(numberStr));
+            Perft(chessBoard, std::stoi(numberStr));
         }
         else if (moveNotation.size() != 4)
         {
@@ -42,11 +42,11 @@ int main()
                 std::cin >> moveNotation;
             };
 
-            // #ifdef _WIN32
-            //             system("cls");
-            // #else
-            //             system("clear");
-            // #endif
+#ifdef _WIN32
+            int ret = system("cls");
+#else
+            int ret = system("clear");
+#endif
         }
     }
 
