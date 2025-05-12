@@ -9,27 +9,41 @@ int main()
     // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
     // r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
     // 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1
-    BoardState chessBoard("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1");
+    BoardState chessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     while (true)
     {
-        // Rysowanie planszy
         chessBoard.DrawBoard();
 
-        String moveNotation;
-        std::cout << "\nPodaj ruch (np. e2e4), \"p 6\" żeby wypisać podzielone ruchy lub wpisz end, aby zakończyć: ";
-        std::cin >> moveNotation;
-        if (moveNotation == "end")
+        std::string moveNotation;
+        std::cout << "\nPodaj ruch (np. e2e4, e7e8q), \"p 6\" aby wykonać perft lub \"quit\" aby zakończyć: ";
+        std::getline(std::cin, moveNotation);
+
+        // Usuń białe znaki z początku i końca
+        moveNotation.erase(0, moveNotation.find_first_not_of(" \t\n\r"));
+        moveNotation.erase(moveNotation.find_last_not_of(" \t\n\r") + 1);
+
+        if (moveNotation == "quit")
         {
             std::cout << "Gra zakończona." << std::endl;
             break;
         }
-        else if (moveNotation[0] == 'p')
+        else if (!moveNotation.empty() && moveNotation[0] == 'p')
         {
-            String numberStr = moveNotation.substr(1, 3);
-            Perft(chessBoard, std::stoi(numberStr));
+            // Obsługa polecenia "p N"
+            std::string depthStr = moveNotation.substr(1);
+            try
+            {
+                int depth = std::stoi(depthStr);
+                Perft(chessBoard, depth);
+            }
+            catch (...)
+            {
+                std::cout << "Niepoprawna liczba dla perft!\n";
+                continue;
+            }
         }
-        else if (moveNotation.size() != 4)
+        else if (moveNotation.size() != 4 && moveNotation.size() != 5)
         {
             std::cout << "Niepoprawny format ruchu! Spróbuj ponownie.\n";
             continue;
@@ -40,15 +54,44 @@ int main()
             {
                 std::cout << "Niepoprawny ruch! Spróbuj ponownie.\n";
                 std::cin >> moveNotation;
-            };
+            }
 
 #ifdef _WIN32
-            int ret = system("cls");
+            int val = system("cls");
 #else
-            int ret = system("clear");
+            int val = system("clear");
 #endif
         }
-    }
 
-    return 0;
+        if (chessBoard.IsCheckmate())
+        {
+            chessBoard.DrawBoard();
+            std::cout << "Szach-mat!\n";
+            break;
+        }
+        else if (chessBoard.IsStalemate())
+        {
+            chessBoard.DrawBoard();
+            std::cout << "Pat! Gra zakończona remisem.\n";
+            break;
+        }
+        else if (chessBoard.IsFiftyMoveRule())
+        {
+            chessBoard.DrawBoard();
+            std::cout << "Remis przez regułę 50 posunięć.\n";
+            break;
+        }
+        else if (chessBoard.IsThreefoldRepetition())
+        {
+            chessBoard.DrawBoard();
+            std::cout << "Remis przez trzykrotne powtórzenie pozycji.\n";
+            break;
+        }
+        else if (chessBoard.IsInsufficientMaterial())
+        {
+            chessBoard.DrawBoard();
+            std::cout << "Remis z powodu niewystarczającego materiału.\n";
+            break;
+        }
+    }
 }

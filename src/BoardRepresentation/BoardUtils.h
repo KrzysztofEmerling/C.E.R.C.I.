@@ -13,14 +13,13 @@ union Flags
     struct
     {
         uint8_t whiteOnMove;
+        uint8_t halfmoveClock;
+        uint16_t moves;
 
         uint8_t whiteShortCastelRights;
         uint8_t whiteLongCastelRights;
         uint8_t blackShortCastelRights;
         uint8_t blackLongCastelRights;
-
-        uint8_t halfmoveClock;
-        uint16_t moves;
     };
 };
 

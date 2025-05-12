@@ -7,9 +7,31 @@
 BoardState::BoardState(String FENnotation)
 {
     m_Flags = ParseFEN(FENnotation, m_Pieces);
+
+    if (m_Flags.whiteOnMove)
+        m_ZHash.ToggleSideToMove();
+
+    for (int piece = 0; piece < 12; piece++)
+    {
+        u64f temp = m_Pieces[piece];
+        while (temp)
+        {
+            int index = __builtin_ctzll(temp);
+            temp &= temp - 1;
+            m_ZHash.UpdatePiece(index, piece);
+        }
+    }
+
+    if (m_Pieces[12])
+    {
+        int file = __builtin_ctzll(m_Pieces[12]) / 8;
+        m_ZHash.UpdateEnPassant(file);
+    }
+
+    m_ZHash.UpdateCastling(m_Flags);
 }
 
-BoardState::BoardState(Flags flags, u64f (&pieces)[13]) : m_Flags(flags)
+BoardState::BoardState(Flags flags, u64f (&pieces)[13], ZobristHash zHash) : m_Flags(flags), m_ZHash(zHash)
 {
     for (int i = 0; i < 13; i++)
     {
@@ -78,175 +100,50 @@ void BoardState::DrawBoard() const
 
 void BoardState::MakeMove(Move move)
 {
+    // zabezpieczone na potrzeby perft testów
+    m_PreviousMovesHashes[m_Flags.halfmoveClock % 100] = m_ZHash.GetHash();
+
     u64 startingPos = BitboardsIndecies[move.startingSquere];
     u64 destPos = BitboardsIndecies[move.destSquere];
-
-    int figToMove = -1;
-    int figToCapture = -1;
-
-    for (int i = 0; i < 12; i++)
-    {
-        if (startingPos & m_Pieces[i])
-            figToMove = i;
-        if (destPos & m_Pieces[i])
-            figToCapture = i;
-    }
+    int figToMove = findPieceAt(startingPos, m_Flags.whiteOnMove);
+    int figToCapture = findPieceAt(destPos, !m_Flags.whiteOnMove);
 
     switch (move.flag)
     {
     case NormalMove:
-
-        // przypadki roszady
-        m_Pieces[Empassants] = 0ULL;
-        if (figToMove == WhiteKing)
-        {
-            m_Flags.whiteShortCastelRights = false;
-            m_Flags.whiteLongCastelRights = false;
-        }
-        else if (figToMove == WhiteRooks)
-        {
-            if (startingPos & 0x80)
-                m_Flags.whiteShortCastelRights = false;
-            else if (startingPos & 0x1)
-                m_Flags.whiteLongCastelRights = false;
-        }
-
-        else if (figToMove == BlackKing)
-        {
-            m_Flags.blackShortCastelRights = false;
-            m_Flags.blackLongCastelRights = false;
-        }
-        else if (figToMove == BlackRooks)
-        {
-            if (startingPos & 0x8000000000000000)
-                m_Flags.blackShortCastelRights = false;
-            else if (startingPos & 0x100000000000000)
-                m_Flags.blackLongCastelRights = false;
-        }
-        // Przesuń pionek/figurę
-        m_Pieces[figToMove] &= ~startingPos;
-        m_Pieces[figToMove] |= destPos;
-
-        // Jeśli bicie, usuń zbitego
-        if (figToCapture > -1)
-        {
-            m_Pieces[figToCapture] &= ~destPos;
-            m_Flags.halfmoveClock = 0;
-        }
+        handleNormalMove(figToMove, move.startingSquere, startingPos, figToCapture, move.destSquere, destPos);
         break;
 
     case DoublePush:
-    {
-        // Przesuń pionka
-        m_Pieces[figToMove] &= ~startingPos;
-        m_Pieces[figToMove] |= destPos;
-
-        // Ustaw pole en passant
-        int direction = (figToMove == WhitePawns) ? -8 : 8;
-        int epSquare = move.destSquere + direction;
-        m_Pieces[Empassants] = BitboardsIndecies[epSquare];
-
-        m_Flags.halfmoveClock = 0;
+        handleDoublePush(figToMove, move.startingSquere, move.destSquere, startingPos, destPos);
         break;
-    }
 
     case PromotionQueen:
-    case PromotionRook:
-    case PromotionKnight:
-    case PromotionBishop:
-    {
-        m_Pieces[Empassants] = 0ULL;
-        m_Flags.halfmoveClock = 0;
-        int new_piece = -1;
-        switch (move.flag)
-        {
-        case PromotionQueen:
-            new_piece = (figToMove < 6) ? WhiteQueens : BlackQueens;
-            break;
-        case PromotionRook:
-            new_piece = (figToMove < 6) ? WhiteRooks : BlackRooks;
-            break;
-        case PromotionKnight:
-            new_piece = (figToMove < 6) ? WhiteKnights : BlackKnights;
-            break;
-        case PromotionBishop:
-            new_piece = (figToMove < 6) ? WhiteBishops : BlackBishops;
-            break;
-        }
-
-        // Usuń pionka z pola startowego
-        m_Pieces[figToMove] &= ~startingPos;
-
-        // Jeśli bicie, usuń zbitego
-        if (figToCapture > -1)
-        {
-            m_Pieces[figToCapture] &= ~destPos;
-        }
-
-        // Dodaj nową figurę na polu docelowym
-        m_Pieces[new_piece] |= destPos;
+        handlePromotion(figToMove, move.startingSquere, figToCapture, move.destSquere, startingPos, destPos,
+                        m_Flags.whiteOnMove ? WhiteQueens : BlackQueens);
         break;
-    }
+
+    case PromotionRook:
+        handlePromotion(figToMove, move.startingSquere, figToCapture, move.destSquere, startingPos, destPos,
+                        m_Flags.whiteOnMove ? WhiteRooks : BlackRooks);
+        break;
+
+    case PromotionKnight:
+        handlePromotion(figToMove, move.startingSquere, figToCapture, move.destSquere, startingPos, destPos,
+                        m_Flags.whiteOnMove ? WhiteKnights : BlackKnights);
+        break;
+
+    case PromotionBishop:
+        handlePromotion(figToMove, move.startingSquere, figToCapture, move.destSquere, startingPos, destPos,
+                        m_Flags.whiteOnMove ? WhiteBishops : BlackBishops);
+        break;
 
     case EmpassantMove:
-    {
-        m_Pieces[Empassants] = 0ULL;
-        // Usuń pionka z pola startowego
-        m_Pieces[figToMove] &= ~startingPos;
-        // Dodaj pionka na polu docelowym
-        m_Pieces[figToMove] |= destPos;
-
-        // Usuń zbitego pionka en passant
-        int epSquare = (figToMove == WhitePawns) ? move.destSquere - 8 : move.destSquere + 8;
-        int capturedPawn = (figToMove == WhitePawns) ? BlackPawns : WhitePawns;
-        m_Pieces[capturedPawn] &= ~BitboardsIndecies[epSquare];
-
-        m_Flags.halfmoveClock = 0;
+        handleEnPassant(figToMove, move.startingSquere, move.destSquere, startingPos, destPos);
         break;
-    }
 
     case Castling:
-        m_Pieces[Empassants] = 0ULL;
-        if (m_Flags.whiteOnMove)
-        {
-            m_Flags.whiteShortCastelRights = false;
-            m_Flags.whiteLongCastelRights = false;
-
-            if (move.destSquere == 6)
-            {
-                m_Pieces[WhiteKing] = 0x40;
-
-                m_Pieces[WhiteRooks] &= 0xffffffffffffff7f;
-                m_Pieces[WhiteRooks] |= 0x20;
-            }
-            else
-            {
-                m_Pieces[WhiteKing] = 0x4;
-
-                m_Pieces[WhiteRooks] &= 0xfffffffffffffffe;
-                m_Pieces[WhiteRooks] |= 0x8;
-            }
-        }
-        else
-        {
-            m_Flags.blackShortCastelRights = false;
-            m_Flags.blackLongCastelRights = false;
-
-            if (move.destSquere == 62)
-            {
-                m_Pieces[BlackKing] = 0x4000000000000000;
-
-                m_Pieces[BlackRooks] &= 0x7fffffffffffffff;
-                m_Pieces[BlackRooks] |= 0x2000000000000000;
-            }
-            else
-            {
-                m_Pieces[BlackKing] = 0x400000000000000;
-
-                m_Pieces[BlackRooks] &= 0xfeffffffffffffff;
-                m_Pieces[BlackRooks] |= 0x800000000000000;
-            }
-        }
+        handleCastling(move.startingSquere, move.destSquere);
         break;
     }
 
@@ -254,21 +151,39 @@ void BoardState::MakeMove(Move move)
     if (figToCapture == WhiteRooks)
     {
         if (destPos & 0x80)
+        {
+            m_ZHash.UpdateCastling(m_Flags);
             m_Flags.whiteShortCastelRights = false;
+            m_ZHash.UpdateCastling(m_Flags);
+        }
         else if (destPos & 0x1)
+        {
+            m_ZHash.UpdateCastling(m_Flags);
             m_Flags.whiteLongCastelRights = false;
+            m_ZHash.UpdateCastling(m_Flags);
+        }
     }
     else if (figToCapture == BlackRooks)
     {
         if (destPos & 0x8000000000000000)
+        {
+            m_ZHash.UpdateCastling(m_Flags);
             m_Flags.blackShortCastelRights = false;
+            m_ZHash.UpdateCastling(m_Flags);
+        }
         else if (destPos & 0x100000000000000)
+        {
+            m_ZHash.UpdateCastling(m_Flags);
             m_Flags.blackLongCastelRights = false;
+            m_ZHash.UpdateCastling(m_Flags);
+        }
     }
 
     // Aktualizacja ruchu pełnego i zmiana strony
+
     if (!m_Flags.whiteOnMove)
         m_Flags.moves += 1;
+
     if (figToMove != WhitePawns && figToCapture == -1)
         m_Flags.halfmoveClock += 1;
 
@@ -276,6 +191,8 @@ void BoardState::MakeMove(Move move)
         m_Flags.halfmoveClock += 1;
 
     m_Flags.whiteOnMove = !m_Flags.whiteOnMove;
+
+    m_ZHash.ToggleSideToMove();
 }
 
 bool BoardState::MakeMove(const char *move_notation)
@@ -286,8 +203,7 @@ bool BoardState::MakeMove(const char *move_notation)
 
     // Walidacja
     std::queue<Move> moves;
-    BoardState board(m_Flags, m_Pieces);
-    MoveGenerator::GetLegalMoves(board, moves);
+    MoveGenerator::GetLegalMoves(*this, moves);
 
     while (!moves.empty())
     {

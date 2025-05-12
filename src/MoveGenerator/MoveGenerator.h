@@ -9,6 +9,8 @@ class MoveGenerator
 public:
     static void GetLegalMoves(const BoardState &state, std::queue<Move> &moves);
 
+    static bool IsKingInCheck(bool isWhiteTurn, const u64f (&pieces)[13]);
+
 private:
     enum PinablePieces
     {
