@@ -5,6 +5,41 @@
 
 #include <iostream>
 
+bool MoveGenerator::IsKingInCheck(bool isWhiteTurn, const u64f (&pieces)[13])
+{
+    u64 all = pieces[0] | pieces[1] | pieces[2] |
+              pieces[3] | pieces[4] | pieces[5] |
+              pieces[6] | pieces[7] | pieces[8] |
+              pieces[9] | pieces[10] | pieces[11];
+
+    if (isWhiteTurn)
+    {
+        u64 horizontalAttackers = pieces[BlackQueens] | pieces[BlackRooks];
+
+        u64 oponentPawnsAttacks = GetBlackPawnsAttacksBBs(pieces[BlackPawns]);
+        u64 oponentKnightsAttacks = GetKnightsAttacksBBs(pieces[BlackKnights]);
+        u64 oponentBishopsAttacks = GetPseudoLegalBishopsBBs(pieces[BlackBishops], all);
+        u64 oponentRooksAttacks = GetPseudoLegalRooksBBs(pieces[BlackRooks], all);
+        u64 oponentQueensAttacks = GetPseudoLegalQueensBBs(pieces[BlackQueens], all);
+        u64 oponentKingAttacks = GetPseudoLegalKingBBs(pieces[BlackKing]);
+        u64 underAttack = oponentPawnsAttacks | oponentKnightsAttacks | oponentBishopsAttacks | oponentRooksAttacks | oponentQueensAttacks | oponentKingAttacks;
+        return pieces[WhiteKing] & underAttack;
+    }
+    else
+    {
+        u64 horizontalAttackers = pieces[WhiteQueens] | pieces[WhiteRooks];
+
+        u64 oponentPawnsAttacks = GetWhitePawnsAttacksBBs(pieces[WhitePawns]);
+        u64 oponentKnightsAttacks = GetKnightsAttacksBBs(pieces[WhiteKnights]);
+        u64 oponentBishopsAttacks = GetPseudoLegalBishopsBBs(pieces[WhiteBishops], all);
+        u64 oponentRooksAttacks = GetPseudoLegalRooksBBs(pieces[WhiteRooks], all);
+        u64 oponentQueensAttacks = GetPseudoLegalQueensBBs(pieces[WhiteQueens], all);
+        u64 oponentKingAttacks = GetPseudoLegalKingBBs(pieces[WhiteKing]);
+        u64 underAttack = oponentPawnsAttacks | oponentKnightsAttacks | oponentBishopsAttacks | oponentRooksAttacks | oponentQueensAttacks | oponentKingAttacks;
+        return pieces[BlackKing] & underAttack;
+    }
+}
+
 void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &moves)
 {
     const u64f *pieces = state.GetBBs();

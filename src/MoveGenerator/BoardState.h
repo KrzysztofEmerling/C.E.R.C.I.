@@ -1,4 +1,5 @@
 #include "BoardUtils.h"
+#include "ZobristHash.h"
 
 #pragma once
 
@@ -18,6 +19,9 @@ class BoardState
 private:
     Flags m_Flags;
     u64f m_Pieces[13];
+    ZobristHash m_ZHash;
+
+    u64 m_PreviousMovesHashes[100];
 
     const char *m_UnicodePieces[13] = {
         "♟", "♞", "♝", "♜", "♛", "♚", // Białe
@@ -26,7 +30,7 @@ private:
 
 public:
     BoardState(String FENnotation);
-    BoardState(Flags flags, u64f (&pieces)[13]);
+    BoardState(Flags flags, u64f (&pieces)[13], ZobristHash zHash);
 
     void DrawBoard() const;
 
@@ -43,7 +47,21 @@ public:
     inline uint8_t GetHalfMoves() const noexcept { return m_Flags.halfmoveClock; }
     inline uint16_t GetMoves() const noexcept { return m_Flags.moves; }
 
-    // unchecked
     void MakeMove(Move move);
     bool MakeMove(const char *move_notation);
+
+    bool IsThreefoldRepetition() const;
+    bool IsFiftyMoveRule() const;
+    bool IsCheckmate() const;
+    bool IsStalemate() const;
+    bool IsInsufficientMaterial() const;
+
+private:
+    int findPieceAt(u64 squareBB, bool white);
+    void handleNormalMove(int figToMove, int startIndex, u64 startingPos, int figToCapture, int destIndex, u64 destPos);
+    void handleDoublePush(int figToMove, int startIndex, int destIndex, u64 startingPos, u64 destPos);
+    void handlePromotion(int figToMove, int startIndex, int figToCapture, int destIndex, u64 startingPos, u64 destPos, int new_piece);
+    void handleEnPassant(int figToMove, int startIndex, int destIndex, u64 startingPos, u64 destPos);
+    void handleCastling(int startIndex, int destIndex);
+    void clearEnPassant();
 };
