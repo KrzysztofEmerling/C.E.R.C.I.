@@ -40,7 +40,7 @@ bool MoveGenerator::IsKingInCheck(bool isWhiteTurn, const u64f (&pieces)[13])
     }
 }
 
-void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &moves)
+void MoveGenerator::GetLegalMoves(const BoardState &state, MoveList &moves)
 {
     const u64f *pieces = state.GetBBs();
     const Flags flags = state.GetFlags();
@@ -212,7 +212,7 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, std::queue<Move> &mov
 }
 
 u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u64 white, u64 black,
-                                           u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], std::queue<Move> &moves)
+                                           u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], MoveList &moves)
 {
     u64 horizontalBlockersMask = RookMagicBitboards::GetBlockersMask(kingSquare);
     u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(kingSquare);
@@ -314,7 +314,7 @@ u64 MoveGenerator::ResolveWhitePinedPieces(const u64f *pieces, int kingSquare, u
 }
 
 u64 MoveGenerator::ResolveBlackPinedPieces(const u64f *pieces, int kingSquare, u64 white, u64 black,
-                                           u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], std::queue<Move> &moves)
+                                           u64 all, u64 notAllay, u64 empty, u64 posibleMovesMask, u64f (&unpinedPieces)[4], MoveList &moves)
 {
     u64 horizontalBlockersMask = RookMagicBitboards::GetBlockersMask(kingSquare);
     u64 diagonalBlockersMask = BishopMagicBitboards::GetBlockersMask(kingSquare);

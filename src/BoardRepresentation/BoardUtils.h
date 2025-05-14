@@ -54,14 +54,37 @@ enum MovesFlags
     Castling
 };
 
+enum MovesCategories
+{
+    Quiet = 1,
+    Capture = 2,
+    Promotion = 4,
+    Killer = 8
+};
+
 struct Move
 {
     uint8_t startingSquere;
     uint8_t destSquere;
     uint8_t flag;
+    uint8_t categorie;
 
-    Move(uint8_t start, uint8_t dest, uint8_t flag) : startingSquere(start), destSquere(dest), flag(flag) {}
-    Move(uint8_t start, uint8_t dest) : startingSquere(start), destSquere(dest), flag(NormalMove) {}
+    Move() : startingSquere(0), destSquere(0), flag(NormalMove) {}
+    Move(uint8_t start, uint8_t dest, uint8_t flag, uint8_t categorie) : startingSquere(start), destSquere(dest), flag(flag), categorie(categorie) {}
+    Move(uint8_t start, uint8_t dest, uint8_t categorie) : startingSquere(start), destSquere(dest), flag(NormalMove), categorie(categorie) {}
+};
+
+struct MoveList
+{
+    std::size_t movesCount;
+    Move moves[218];
+
+    MoveList() : movesCount(0) {}
+
+    void push(const Move move)
+    {
+        moves[movesCount++] = move;
+    }
 };
 
 constexpr std::array<u64, 64> GenerateBitboardTable()
