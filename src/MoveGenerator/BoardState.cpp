@@ -202,13 +202,12 @@ bool BoardState::MakeMove(const char *move_notation)
     int to = SquareIndex[move_notation[2] - 'a'][move_notation[3] - '1'];
 
     // Walidacja
-    std::queue<Move> moves;
-    MoveGenerator::GetLegalMoves(*this, moves);
+    MoveList movesList;
+    MoveGenerator::GetLegalMoves(*this, movesList);
 
-    while (!moves.empty())
+    for (int i = 0; i < movesList.movesCount; i++)
     {
-        Move move = moves.front();
-        moves.pop();
+        Move move = movesList.moves[i];
 
         if (move.startingSquere == from && move.destSquere == to)
         {

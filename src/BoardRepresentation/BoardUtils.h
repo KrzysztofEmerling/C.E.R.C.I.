@@ -60,8 +60,22 @@ struct Move
     uint8_t destSquere;
     uint8_t flag;
 
+    Move() : startingSquere(0), destSquere(0), flag(NormalMove) {}
     Move(uint8_t start, uint8_t dest, uint8_t flag) : startingSquere(start), destSquere(dest), flag(flag) {}
     Move(uint8_t start, uint8_t dest) : startingSquere(start), destSquere(dest), flag(NormalMove) {}
+};
+
+struct MoveList
+{
+    std::size_t movesCount;
+    Move moves[218];
+
+    MoveList() : movesCount(0) {}
+
+    void push(const Move move)
+    {
+        moves[movesCount++] = move;
+    }
 };
 
 constexpr std::array<u64, 64> GenerateBitboardTable()

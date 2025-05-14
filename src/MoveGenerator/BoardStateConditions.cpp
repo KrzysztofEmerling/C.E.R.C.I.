@@ -9,7 +9,7 @@ bool BoardState::IsThreefoldRepetition() const
     {
         if (hash == m_PreviousMovesHashes[i])
         {
-            if (++repCounter > 2)
+            if (++repCounter > 1)
                 return true;
         }
     }
@@ -21,10 +21,10 @@ bool BoardState::IsFiftyMoveRule() const
 }
 bool BoardState::IsCheckmate() const
 {
-    std::queue<Move> moves;
-    MoveGenerator::GetLegalMoves(*this, moves);
+    MoveList movesList;
+    MoveGenerator::GetLegalMoves(*this, movesList);
 
-    if (moves.empty())
+    if (movesList.movesCount == 0)
     {
         return MoveGenerator::IsKingInCheck(m_Flags.whiteOnMove, m_Pieces);
     }
@@ -32,10 +32,10 @@ bool BoardState::IsCheckmate() const
 }
 bool BoardState::IsStalemate() const
 {
-    std::queue<Move> moves;
-    MoveGenerator::GetLegalMoves(*this, moves);
+    MoveList movesList;
+    MoveGenerator::GetLegalMoves(*this, movesList);
 
-    if (moves.empty())
+    if (movesList.movesCount == 0)
     {
         return !MoveGenerator::IsKingInCheck(m_Flags.whiteOnMove, m_Pieces);
     }

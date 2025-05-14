@@ -3,6 +3,6 @@
 
 int main()
 {
-    PerftTests::RunQuickTest();
+    PerftTests::RunLongTests();
     return 0;
 }
