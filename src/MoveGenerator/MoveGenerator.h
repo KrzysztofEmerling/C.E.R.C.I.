@@ -3,9 +3,13 @@
 
 #include "BoardUtils.h"
 #include "BoardState.h"
+#include "MoveGenTT.h"
 
 class MoveGenerator
 {
+private:
+    static MoveGenTT m_tt;
+
 public:
     static void GetLegalMoves(const BoardState &state, MoveList &moves);
 
@@ -34,13 +38,13 @@ private:
     static void GetLegalWhitePawnsMoves(u64f pawns, u64f king, u64 empty, u64 all, u64 black, u64 enpassants, u64 horizontalAttackers, u64 posibleMovesMask, MoveList &moves);
     static void GetLegalBlackPawnsMoves(u64f pawns, u64f king, u64 empty, u64 all, u64 white, u64 enpassants, u64 horizontalAttackers, u64 posibleMovesMask, MoveList &moves);
 
-    static void GetLegalKingMoves(int square, u64 movementBBs, MoveList &moves);
+    static void GetLegalKingMoves(int square, u64 movementBBs, u64 enemys, MoveList &moves);
 
-    static void GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posibleMovesMask, MoveList &moves);
+    static void GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posibleMovesMask, u64 enemys, MoveList &moves);
 
-    static void GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u64 posibleMovesMask, MoveList &moves);
-    static void GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 posibleMovesMask, MoveList &moves);
-    static void GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 posibleMovesMask, MoveList &moves);
+    static void GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u64 posibleMovesMask, u64 enemys, MoveList &moves);
+    static void GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 posibleMovesMask, u64 enemys, MoveList &moves);
+    static void GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 posibleMovesMask, u64 enemys, MoveList &moves);
 
     static void GetLegalWhiteCasels(u64 allay, u64 attacks, bool shortCastelRights, bool longCastelRights, MoveList &moves);
     static void GetLegalBlackCasels(u64 allay, u64 attacks, bool shortCastelRights, bool longCastelRights, MoveList &moves);

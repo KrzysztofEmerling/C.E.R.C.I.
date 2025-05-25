@@ -44,14 +44,14 @@ enum BitBoardsIndecis
 
 enum MovesFlags
 {
-    NormalMove,
-    DoublePush,
-    PromotionQueen,
-    PromotionRook,
-    PromotionKnight,
-    PromotionBishop,
-    EmpassantMove,
-    Castling
+    NormalMove = 1,
+    DoublePush = 2,
+    PromotionQueen = 4,
+    PromotionRook = 8,
+    PromotionKnight = 16,
+    PromotionBishop = 32,
+    EmpassantMove = 64,
+    Castling = 128
 };
 
 enum MovesCategories
@@ -69,9 +69,9 @@ struct Move
     uint8_t flag;
     uint8_t categorie;
 
-    Move() : startingSquere(0), destSquere(0), flag(NormalMove) {}
-    Move(uint8_t start, uint8_t dest, uint8_t flag, uint8_t categorie) : startingSquere(start), destSquere(dest), flag(flag), categorie(categorie) {}
-    Move(uint8_t start, uint8_t dest, uint8_t categorie) : startingSquere(start), destSquere(dest), flag(NormalMove), categorie(categorie) {}
+    Move() : startingSquere(0), destSquere(0), flag(NormalMove), categorie(Quiet) {}
+    Move(uint8_t start, uint8_t dest, MovesFlags flag, uint8_t categorie) : startingSquere(start), destSquere(dest), flag(flag), categorie(categorie) {}
+    // Move(uint8_t start, uint8_t dest, uint8_t categorie) : startingSquere(start), destSquere(dest), flag(NormalMove), categorie(categorie) {}
 };
 
 struct MoveList
