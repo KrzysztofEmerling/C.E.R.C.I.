@@ -36,6 +36,7 @@ public:
 
     inline u64f GetBB(BitBoardsIndecis pieceType) const noexcept { return m_Pieces[pieceType]; }
     inline const u64f *GetBBs() const noexcept { return m_Pieces; }
+    inline const u64 GetHash() const { return m_ZHash.GetHash(); }
 
     inline Flags GetFlags() const noexcept { return m_Flags; }
     inline bool IsWhiteMove() const noexcept { return m_Flags.whiteOnMove; }

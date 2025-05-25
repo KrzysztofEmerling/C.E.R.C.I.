@@ -55,7 +55,7 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64f king, u64 empty, u6
             moves.push(Move(from, dest, PromotionKnight, Promotion));
         }
         else
-            moves.push(Move(from, dest, Quiet));
+            moves.push(Move(from, dest, NormalMove, Quiet));
     }
 
     while (doublePush)
@@ -81,7 +81,7 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64f king, u64 empty, u6
             moves.push(Move(from, dest, PromotionKnight, Promotion | Capture));
         }
         else
-            moves.push(Move(from, dest, Capture));
+            moves.push(Move(from, dest, NormalMove, Capture));
     }
 
     while (rightAttack)
@@ -98,7 +98,7 @@ void MoveGenerator::GetLegalWhitePawnsMoves(u64f pawns, u64f king, u64 empty, u6
             moves.push(Move(from, dest, PromotionKnight, Promotion | Capture));
         }
         else
-            moves.push(Move(from, dest, Capture));
+            moves.push(Move(from, dest, NormalMove, Capture));
     }
 
     if (leftEmpassant)
@@ -149,7 +149,7 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64f king, u64 empty, u6
             moves.push(Move(from, dest, PromotionKnight, Promotion));
         }
         else
-            moves.push(Move(from, dest, Quiet));
+            moves.push(Move(from, dest, NormalMove, Quiet));
     }
 
     while (doublePush)
@@ -175,7 +175,7 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64f king, u64 empty, u6
             moves.push(Move(from, dest, PromotionKnight, Promotion | Capture));
         }
         else
-            moves.push(Move(from, dest, Capture));
+            moves.push(Move(from, dest, NormalMove, Capture));
     }
 
     while (rightAttack)
@@ -192,7 +192,7 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64f king, u64 empty, u6
             moves.push(Move(from, dest, PromotionKnight, Promotion | Capture));
         }
         else
-            moves.push(Move(from, dest));
+            moves.push(Move(from, dest, NormalMove, Capture));
     }
 
     if (leftEmpassant)
@@ -203,7 +203,7 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64f king, u64 empty, u6
         if ((king & RANK4) && EnPassantRevealsCheck(__builtin_ctzll(king), from, all, horizontalAttackers, RANK4))
             return;
 
-        moves.push(Move(from, dest, EmpassantMove));
+        moves.push(Move(from, dest, EmpassantMove, Capture));
     }
     if (rightEmpassant)
     {
@@ -213,22 +213,30 @@ void MoveGenerator::GetLegalBlackPawnsMoves(u64f pawns, u64f king, u64 empty, u6
         if ((king & RANK4) && EnPassantRevealsCheck(__builtin_ctzll(king), from, all, horizontalAttackers, RANK4))
             return;
 
-        moves.push(Move(from, dest, EmpassantMove));
+        moves.push(Move(from, dest, EmpassantMove, Capture));
     }
 }
 
-void MoveGenerator::GetLegalKingMoves(int square, u64 movementBBs, MoveList &moves)
+void MoveGenerator::GetLegalKingMoves(int square, u64 movementBBs, u64 enemys, MoveList &moves)
 {
     while (movementBBs)
     {
         int dest_square = __builtin_ctzll(movementBBs);
         movementBBs &= movementBBs - 1;
-        Move move(square, dest_square);
-        moves.push(move);
+        if (enemys & BitboardsIndecies[dest_square])
+        {
+            Move move(square, dest_square, NormalMove, Capture);
+            moves.push(move);
+        }
+        else
+        {
+            Move move(square, dest_square, NormalMove, Quiet);
+            moves.push(move);
+        }
     }
 }
 
-void MoveGenerator::GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posibleMovesMask, MoveList &moves)
+void MoveGenerator::GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posibleMovesMask, u64 enemys, MoveList &moves)
 {
     while (knights)
     {
@@ -243,13 +251,21 @@ void MoveGenerator::GetLegalKnightsMoves(u64f knights, u64 notAllay, u64 posible
         {
             int dest_square = __builtin_ctzll(destSquaresBBs);
             destSquaresBBs &= destSquaresBBs - 1;
-            Move move(square, dest_square);
-            moves.push(move);
+            if (enemys & BitboardsIndecies[dest_square])
+            {
+                Move move(square, dest_square, NormalMove, Capture);
+                moves.push(move);
+            }
+            else
+            {
+                Move move(square, dest_square, NormalMove, Quiet);
+                moves.push(move);
+            }
         }
     }
 }
 
-void MoveGenerator::GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 posibleMovesMask, MoveList &moves)
+void MoveGenerator::GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blockers, u64 posibleMovesMask, u64 enemys, MoveList &moves)
 {
     u64 tempBishops = bishops;
 
@@ -266,12 +282,20 @@ void MoveGenerator::GetLegalBishopsMoves(u64f bishops, u64 notAllay, u64 blocker
         {
             int dest_square = __builtin_ctzll(bishopMoves);
             bishopMoves &= bishopMoves - 1;
-            Move move(square, dest_square);
-            moves.push(move);
+            if (enemys & BitboardsIndecies[dest_square])
+            {
+                Move move(square, dest_square, NormalMove, Capture);
+                moves.push(move);
+            }
+            else
+            {
+                Move move(square, dest_square, NormalMove, Quiet);
+                moves.push(move);
+            }
         }
     }
 }
-void MoveGenerator::GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u64 posibleMovesMask, MoveList &moves)
+void MoveGenerator::GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u64 posibleMovesMask, u64 enemys, MoveList &moves)
 {
     u64 tempRooks = rooks;
 
@@ -289,12 +313,20 @@ void MoveGenerator::GetLegalRooksMoves(u64f rooks, u64 notAllay, u64 blockers, u
         {
             int dest_square = __builtin_ctzll(rookMoves);
             rookMoves &= rookMoves - 1;
-            Move move(square, dest_square);
-            moves.push(move);
+            if (enemys & BitboardsIndecies[dest_square])
+            {
+                Move move(square, dest_square, NormalMove, Capture);
+                moves.push(move);
+            }
+            else
+            {
+                Move move(square, dest_square, NormalMove, Quiet);
+                moves.push(move);
+            }
         }
     }
 }
-void MoveGenerator::GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 posibleMovesMask, MoveList &moves)
+void MoveGenerator::GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers, u64 posibleMovesMask, u64 enemys, MoveList &moves)
 {
     u64 tempQueens = queens;
 
@@ -313,8 +345,16 @@ void MoveGenerator::GetLegalQueensMoves(u64f queens, u64 notAllay, u64 blockers,
         {
             int dest_square = __builtin_ctzll(queenMoves);
             queenMoves &= queenMoves - 1;
-            Move move(square, dest_square);
-            moves.push(move);
+            if (enemys & BitboardsIndecies[dest_square])
+            {
+                Move move(square, dest_square, NormalMove, Capture);
+                moves.push(move);
+            }
+            else
+            {
+                Move move(square, dest_square, NormalMove, Quiet);
+                moves.push(move);
+            }
         }
     }
 }
@@ -325,12 +365,12 @@ void MoveGenerator::GetLegalWhiteCasels(u64 all, u64 attacks, bool shortCastleRi
 
     if (shortCastleRights && !(WHITE_SHORT_CASTLE_MASK & occupiedOrAttacked))
     {
-        moves.push(Move(4, 6, Castling)); // e1 -> g1
+        moves.push(Move(4, 6, Castling, Quiet)); // e1 -> g1
     }
 
     if (longCastleRights && !(WHITE_LONG_CASTLE_MASK & attacks) && !(WHITE_LONG_ROOK_BLOCK & all))
     {
-        moves.push(Move(4, 2, Castling)); // e1 -> c1
+        moves.push(Move(4, 2, Castling, Quiet)); // e1 -> c1
     }
 }
 void MoveGenerator::GetLegalBlackCasels(u64 all, u64 attacks, bool shortCastleRights, bool longCastleRights, MoveList &moves)
@@ -339,11 +379,11 @@ void MoveGenerator::GetLegalBlackCasels(u64 all, u64 attacks, bool shortCastleRi
 
     if (shortCastleRights && !(BLACK_SHORT_CASTLE_MASK & occupiedOrAttacked))
     {
-        moves.push(Move(60, 62, Castling)); // e8 -> g8
+        moves.push(Move(60, 62, Castling, Quiet)); // e8 -> g8
     }
 
     if (longCastleRights && !(BLACK_LONG_CASTLE_MASK & attacks) && !(BLACK_LONG_ROOK_BLOCK & all))
     {
-        moves.push(Move(60, 58, Castling)); // e8 -> c8
+        moves.push(Move(60, 58, Castling, Quiet)); // e8 -> c8
     }
 }
