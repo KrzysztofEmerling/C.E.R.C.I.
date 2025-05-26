@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 #include "BoardState.h"
+#include "Eval.h"
 #include "Perft.h"
 
 int main()
@@ -10,7 +11,7 @@ int main()
     // r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
     // 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1
     // pozycja dla prowadzącego: qqqqkqqq/qqqqqqqq/qqqqqqqq/qqqqqqqqq/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    BoardState chessBoard("qqqqkqqq/qqqqqqqq/qqqqqqqq/qqqqqqqqq/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    BoardState chessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     while (true)
     {
@@ -92,6 +93,29 @@ int main()
         {
             chessBoard.DrawBoard();
             std::cout << "Remis z powodu niewystarczającego materiału.\n";
+            break;
+        }
+
+        // Ruch bota
+        std::cout << "\nBot myśli...\n";
+        Move botMove = Eval::FindBestMove(chessBoard, 4);
+
+        char f1 = 'a' + (botMove.startingSquere % 8);
+        char r1 = '1' + (botMove.startingSquere / 8);
+        char f2 = 'a' + (botMove.destSquere % 8);
+        char r2 = '1' + (botMove.destSquere / 8);
+
+        std::cout << "\nBot wykonuje: " << f1 << r1 << f2 << r2 << "\n";
+
+        chessBoard.MakeMove(botMove);
+        std::cout << "\nTwój ruch.\n";
+
+        // Sprawdź zakończenie gry po ruchu bota
+        if (chessBoard.IsCheckmate() || chessBoard.IsStalemate() || chessBoard.IsFiftyMoveRule() ||
+            chessBoard.IsThreefoldRepetition() || chessBoard.IsInsufficientMaterial())
+        {
+            chessBoard.DrawBoard();
+            std::cout << "Koniec gry.\n";
             break;
         }
     }

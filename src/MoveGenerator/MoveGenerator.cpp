@@ -5,8 +5,6 @@
 
 #include <iostream>
 
-MoveGenTT MoveGenerator::m_tt;
-
 bool MoveGenerator::IsKingInCheck(bool isWhiteTurn, const u64f (&pieces)[13])
 {
     u64 all = pieces[0] | pieces[1] | pieces[2] |
@@ -44,12 +42,6 @@ bool MoveGenerator::IsKingInCheck(bool isWhiteTurn, const u64f (&pieces)[13])
 
 void MoveGenerator::GetLegalMoves(const BoardState &state, MoveList &moves)
 {
-    u64 zHash = state.GetHash();
-    if (m_tt.probe(zHash, moves))
-    {
-        return;
-    }
-
     const u64f *pieces = state.GetBBs();
     const Flags flags = state.GetFlags();
 
@@ -97,7 +89,6 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, MoveList &moves)
             if (std::popcount(attackers) > 1)
             {
                 GetLegalKingMoves(kingSquare, plKing, enemys, moves);
-                m_tt.store(zHash, moves);
                 return;
             }
             else
@@ -142,7 +133,6 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, MoveList &moves)
             GetLegalKingMoves(kingSquare, plKing, enemys, moves);
 
             GetLegalWhiteCasels(all, underAttack, flags.whiteShortCastelRights, flags.whiteLongCastelRights, moves);
-            m_tt.store(zHash, moves);
             return;
         }
     }
@@ -175,7 +165,6 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, MoveList &moves)
             if (std::popcount(attackers) > 1)
             {
                 GetLegalKingMoves(kingSquare, plKing, enemys, moves);
-                m_tt.store(zHash, moves);
                 return;
             }
             else
@@ -220,7 +209,6 @@ void MoveGenerator::GetLegalMoves(const BoardState &state, MoveList &moves)
             GetLegalKingMoves(kingSquare, plKing, enemys, moves);
             GetLegalBlackCasels(all, underAttack, flags.blackShortCastelRights, flags.blackLongCastelRights, moves);
 
-            m_tt.store(zHash, moves);
             return;
         }
     }
