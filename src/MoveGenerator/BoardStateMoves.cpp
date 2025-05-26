@@ -1,5 +1,41 @@
 #include "BoardState.h"
 
+void BoardState::saveSnapshot()
+{
+    m_Snapshots[m_HeadIndex].flags = m_Flags;
+    m_Snapshots[m_HeadIndex].zHash = m_ZHash;
+    for (int i = 0; i < 13; i++)
+    {
+        m_Snapshots[m_HeadIndex].pieces[i] = m_Pieces[i];
+    }
+
+    m_HeadIndex = (m_HeadIndex + 1) % maxHistorySize;
+    if (m_SnapshotsCount < maxHistorySize)
+    {
+        ++m_SnapshotsCount;
+    }
+}
+
+bool BoardState::UndoMove()
+{
+    if (m_SnapshotsCount == 0)
+        return false;
+
+    // Cofnij head do poprzedniego stanu
+    m_HeadIndex = (m_HeadIndex - 1 + maxHistorySize) % maxHistorySize;
+
+    // Przywróć stan z tablicy
+    m_Flags = m_Snapshots[m_HeadIndex].flags;
+    for (int i = 0; i < 13; i++)
+    {
+        m_Pieces[i] = m_Snapshots[m_HeadIndex].pieces[i];
+    }
+    m_ZHash = m_Snapshots[m_HeadIndex].zHash;
+
+    m_SnapshotsCount--;
+    return true;
+}
+
 int BoardState::findPieceAt(u64 squareBB, bool white)
 {
     int offset = white * 6;

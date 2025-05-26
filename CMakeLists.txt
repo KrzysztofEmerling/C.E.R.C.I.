@@ -9,6 +9,7 @@ option(BUILD_TESTS "Build the tests" OFF)
 add_subdirectory(src/BoardRepresentation)
 add_subdirectory(src/MoveGenerator)
 add_subdirectory(src/TranspositionTabels)
+add_subdirectory(src/Eval)
 
 # Budowa testów
 if(BUILD_TESTS)
@@ -26,9 +27,10 @@ endif()
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    BoardReprezentationLib
+    BoardRepresentationLib
     MoveGeneratorLib 
     TTsLib
+    EvalLib
 )
 target_include_directories(${PROJECT_NAME} PRIVATE src/BoardRepresentation)
 

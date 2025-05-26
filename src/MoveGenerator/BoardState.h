@@ -14,6 +14,14 @@ constexpr uint8_t SquareIndex[8][8] = {
     {7, 15, 23, 31, 39, 47, 55, 63}  // h1, h2, h3, ..., h8
 };
 
+struct BoardStateSnapshot
+{
+    Flags flags;
+    u64f pieces[13];
+    ZobristHash zHash;
+};
+constexpr size_t maxHistorySize = 120;
+
 class BoardState
 {
 private:
@@ -22,6 +30,10 @@ private:
     ZobristHash m_ZHash;
 
     u64 m_PreviousMovesHashes[100];
+
+    BoardStateSnapshot m_Snapshots[maxHistorySize];
+    uint16_t m_HeadIndex;
+    uint16_t m_SnapshotsCount;
 
     const char *m_UnicodePieces[13] = {
         "♟", "♞", "♝", "♜", "♛", "♚", // Białe
@@ -50,6 +62,7 @@ public:
 
     void MakeMove(Move move);
     bool MakeMove(const char *move_notation);
+    bool UndoMove();
 
     bool IsThreefoldRepetition() const;
     bool IsFiftyMoveRule() const;
@@ -65,4 +78,6 @@ private:
     void handleEnPassant(int figToMove, int startIndex, int destIndex, u64 startingPos, u64 destPos);
     void handleCastling(int startIndex, int destIndex);
     void clearEnPassant();
+
+    void saveSnapshot();
 };

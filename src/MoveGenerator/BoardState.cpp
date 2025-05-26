@@ -100,6 +100,7 @@ void BoardState::DrawBoard() const
 
 void BoardState::MakeMove(Move move)
 {
+    saveSnapshot();
     // zabezpieczone na potrzeby perft testów
     m_PreviousMovesHashes[m_Flags.halfmoveClock % 100] = m_ZHash.GetHash();
 

@@ -3,13 +3,9 @@
 
 #include "BoardUtils.h"
 #include "BoardState.h"
-#include "MoveGenTT.h"
 
 class MoveGenerator
 {
-private:
-    static MoveGenTT m_tt;
-
 public:
     static void GetLegalMoves(const BoardState &state, MoveList &moves);
 

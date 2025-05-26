@@ -13,4 +13,4 @@ target_include_directories(MoveGeneratorLib PRIVATE
 
 target_include_directories(MoveGeneratorLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(MoveGeneratorLib PRIVATE BoardReprezentationLib TTsLib)
+target_link_libraries(MoveGeneratorLib PRIVATE BoardRepresentationLib TTsLib)
