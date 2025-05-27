@@ -12,7 +12,7 @@ target_include_directories(TestLib PUBLIC
 
 # Linkowanie z bibliotekami silnika
 target_link_libraries(TestLib
-    BoardReprezentationLib
+    BoardRepresentationLib
     MoveGeneratorLib
     TTsLib 
 )

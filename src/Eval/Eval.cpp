@@ -3,8 +3,18 @@
 
 int Eval::staticEval(const BoardState &board)
 {
+    if ( // board.IsFiftyMoveRule() || board.IsInsufficientMaterial() ||
+        board.IsStalemate()
+        // || board.IsThreefoldRepetition()
+    )
+        return 0;
+    if (board.IsCheckmate())
+    {
+        return minEvalScore;
+    }
+
     const u64f *pieces = board.GetBBs();
-    int eval = 20 * (-1 * board.GetFlags().whiteOnMove);
+    int eval = 2 * (-1 * board.GetFlags().whiteOnMove);
 
     int allPiecesCount = 0;
     for (int i = 0; i < 12; i++)
@@ -36,69 +46,42 @@ int Eval::staticEval(const BoardState &board)
             int index = __builtin_ctzll(piece);
             piece &= piece - 1;
 
-            eval += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][64 - index] + isEndGame * PiecesEndgamePositionTable[i][64 - index]) / 1024;
+            eval -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][64 - index] + isEndGame * PiecesEndgamePositionTable[i][64 - index]) / 1024;
         }
     }
-
     return eval;
 }
 
-int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta, bool maximizingPlayer)
+int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
 {
+    if (board.IsFiftyMoveRule() || board.IsInsufficientMaterial() || board.IsStalemate() || board.IsThreefoldRepetition())
+        return 0;
+    if (board.IsCheckmate())
+        return minEvalScore;
+
     if (depth == 0)
-    {
-        return Eval::staticEval(board);
-    }
+        return staticEval(board);
 
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
 
-    if (movesList.movesCount == 0)
+    int bestEval = minEvalScore;
+    for (size_t i = 0; i < movesList.movesCount; i++)
     {
-        if (board.IsCheckmate())
-            return maximizingPlayer ? maxEvalScore : minEvalScore;
-        else
-            return 0;
+        board.MakeMove(movesList.moves[i]);
+        int eval = -alphaBeta(board, depth - 1, -beta, -alpha);
+        board.UndoMove();
+
+        if (eval > bestEval)
+            bestEval = eval;
+
+        if (eval > alpha)
+            alpha = eval;
+
+        if (alpha >= beta) // Beta cutoff
+            break;
     }
-
-    if (maximizingPlayer)
-    {
-        int maxEval = minEvalScore;
-        for (const Move &move : movesList.moves)
-        {
-            board.MakeMove(move);
-            int eval = alphaBeta(board, depth - 1, alpha, beta, false);
-            board.UndoMove();
-
-            if (eval > maxEval)
-                maxEval = eval;
-            if (eval > alpha)
-                alpha = eval;
-
-            if (beta <= alpha)
-                break;
-        }
-        return maxEval;
-    }
-    else
-    {
-        int minEval = maxEvalScore;
-        for (const Move &move : movesList.moves)
-        {
-            board.MakeMove(move);
-            int eval = alphaBeta(board, depth - 1, alpha, beta, true);
-            board.UndoMove();
-
-            if (eval < minEval)
-                minEval = eval;
-            if (eval < beta)
-                beta = eval;
-
-            if (beta <= alpha)
-                break;
-        }
-        return minEval;
-    }
+    return bestEval;
 }
 
 Move Eval::FindBestMove(BoardState &board, int depth)
@@ -115,9 +98,7 @@ Move Eval::FindBestMove(BoardState &board, int depth)
     {
         Move move = movesList.moves[i];
         board.MakeMove(move);
-
-        int eval = -alphaBeta(board, depth - 1, -beta, -alpha, false);
-
+        int eval = -alphaBeta(board, depth - 1, -beta, -alpha);
         board.UndoMove();
 
         if (eval > bestEval)
@@ -128,6 +109,5 @@ Move Eval::FindBestMove(BoardState &board, int depth)
         if (eval > alpha)
             alpha = eval;
     }
-
     return bestMove;
 }

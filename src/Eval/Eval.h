@@ -7,7 +7,7 @@ class Eval
 {
 public:
     static int staticEval(const BoardState &board);
-    static int alphaBeta(BoardState &board, int depth, int alpha, int beta, bool maximizingPlayer);
+    static int alphaBeta(BoardState &board, int depth, int alpha, int beta);
     static Move FindBestMove(BoardState &board, int depth);
 
 private:
