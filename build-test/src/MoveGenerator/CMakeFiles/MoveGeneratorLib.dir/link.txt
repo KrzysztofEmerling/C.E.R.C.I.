@@ -1,2 +1,0 @@
-/usr/bin/ar qc libMoveGeneratorLib.a CMakeFiles/MoveGeneratorLib.dir/BoardState.cpp.o CMakeFiles/MoveGeneratorLib.dir/BoardStateConditions.cpp.o CMakeFiles/MoveGeneratorLib.dir/BoardStateMoves.cpp.o CMakeFiles/MoveGeneratorLib.dir/MoveGenerator.cpp.o CMakeFiles/MoveGeneratorLib.dir/MoveGeneratorBBs.cpp.o CMakeFiles/MoveGeneratorLib.dir/MoveGeneratorLegals.cpp.o CMakeFiles/MoveGeneratorLib.dir/Perft.cpp.o
-/usr/bin/ranlib libMoveGeneratorLib.a

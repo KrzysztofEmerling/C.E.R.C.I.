@@ -1,4 +1,0 @@
-/home/krzysztof/Documents/C.E.R.C.I./build-test/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/foo.dir
-/home/krzysztof/Documents/C.E.R.C.I./build-test/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/boo.dir
-/home/krzysztof/Documents/C.E.R.C.I./build-test/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/edit_cache.dir
-/home/krzysztof/Documents/C.E.R.C.I./build-test/CMakeFiles/_CMakeLTOTest-CXX/bin/CMakeFiles/rebuild_cache.dir

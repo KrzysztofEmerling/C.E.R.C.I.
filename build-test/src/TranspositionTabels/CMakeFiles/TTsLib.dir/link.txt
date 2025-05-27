@@ -1,2 +1,0 @@
-/usr/bin/ar qc libTTsLib.a CMakeFiles/TTsLib.dir/m.cpp.o
-/usr/bin/ranlib libTTsLib.a
