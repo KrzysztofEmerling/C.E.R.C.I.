@@ -1,6 +1,12 @@
 #include "BoardUtils.h"
 #include "ZobristHash.h"
 
+#ifndef DISABLE_REFZHASH_WARN
+#define REFZHASH_DEPRECATED [[deprecated("GetRefHash jest powolna, powinna być wywoływana tylko w testach, zdefiniuj DISABLE_REFZHASH_WARN by wyłączyć komunikat.")]]
+#else
+#define REFZHASH_DEPRECATED
+#endif
+
 #pragma once
 
 constexpr uint8_t SquareIndex[8][8] = {
@@ -49,6 +55,9 @@ public:
     inline u64f GetBB(BitBoardsIndecis pieceType) const noexcept { return m_Pieces[pieceType]; }
     inline const u64f *GetBBs() const noexcept { return m_Pieces; }
     inline const u64 GetHash() const { return m_ZHash.GetHash(); }
+
+    REFZHASH_DEPRECATED
+    u64 GetRefHash();
 
     inline Flags GetFlags() const noexcept { return m_Flags; }
     inline bool IsWhiteMove() const noexcept { return m_Flags.whiteOnMove; }

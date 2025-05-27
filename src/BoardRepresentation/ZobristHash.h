@@ -53,12 +53,13 @@ private:
 public:
     ZobristHash();
     ZobristHash(u64 hash);
+    void Initialize(const Flags &flags, const u64f (&pieces)[13]);
 
     inline u64 GetHash() const { return m_CurrentHash; }
 
     void UpdatePiece(int square, int pieceType);
     void UpdateCastling(int flags);
-    void UpdateCastling(Flags flags);
+    void UpdateCastling(const Flags &flags);
     void UpdateEnPassant(int file);
     void ToggleSideToMove();
 };

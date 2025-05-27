@@ -1,0 +1,3 @@
+cmake -S . -B build -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build-test -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=RELEASE
+

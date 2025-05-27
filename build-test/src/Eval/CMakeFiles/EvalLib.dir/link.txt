@@ -1,0 +1,2 @@
+/usr/bin/ar qc libEvalLib.a CMakeFiles/EvalLib.dir/Eval.cpp.o CMakeFiles/EvalLib.dir/EvalLookup.cpp.o
+/usr/bin/ranlib libEvalLib.a

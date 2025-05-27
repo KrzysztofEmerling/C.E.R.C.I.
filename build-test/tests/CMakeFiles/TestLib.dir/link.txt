@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTestLib.a CMakeFiles/TestLib.dir/MoveGenerator/PerftTests.cpp.o
+/usr/bin/ranlib libTestLib.a
