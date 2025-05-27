@@ -6,33 +6,14 @@
 
 BoardState::BoardState(String FENnotation)
 {
+    m_HeadIndex = 0;
     m_Flags = ParseFEN(FENnotation, m_Pieces);
-
-    if (m_Flags.whiteOnMove)
-        m_ZHash.ToggleSideToMove();
-
-    for (int piece = 0; piece < 12; piece++)
-    {
-        u64f temp = m_Pieces[piece];
-        while (temp)
-        {
-            int index = __builtin_ctzll(temp);
-            temp &= temp - 1;
-            m_ZHash.UpdatePiece(index, piece);
-        }
-    }
-
-    if (m_Pieces[12])
-    {
-        int file = __builtin_ctzll(m_Pieces[12]) / 8;
-        m_ZHash.UpdateEnPassant(file);
-    }
-
-    m_ZHash.UpdateCastling(m_Flags);
+    m_ZHash.Initialize(m_Flags, m_Pieces);
 }
 
 BoardState::BoardState(Flags flags, u64f (&pieces)[13], ZobristHash zHash) : m_Flags(flags), m_ZHash(zHash)
 {
+    m_HeadIndex = 0;
     for (int i = 0; i < 13; i++)
     {
         m_Pieces[i] = pieces[i];
@@ -101,8 +82,7 @@ void BoardState::DrawBoard() const
 void BoardState::MakeMove(Move move)
 {
     saveSnapshot();
-    // zabezpieczone na potrzeby perft testów
-    m_PreviousMovesHashes[m_Flags.halfmoveClock % 100] = m_ZHash.GetHash();
+    m_PreviousMovesHashes[m_Flags.halfmoveClock] = m_ZHash.GetHash();
 
     u64 startingPos = BitboardsIndecies[move.startingSquere];
     u64 destPos = BitboardsIndecies[move.destSquere];
@@ -181,7 +161,6 @@ void BoardState::MakeMove(Move move)
     }
 
     // Aktualizacja ruchu pełnego i zmiana strony
-
     if (!m_Flags.whiteOnMove)
         m_Flags.moves += 1;
 
@@ -217,4 +196,11 @@ bool BoardState::MakeMove(const char *move_notation)
         }
     }
     return false;
+}
+
+u64 BoardState::GetRefHash()
+{
+    ZobristHash tempHash;
+    tempHash.Initialize(m_Flags, m_Pieces);
+    return tempHash.GetHash();
 }

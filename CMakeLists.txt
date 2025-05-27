@@ -25,15 +25,14 @@ else()
     add_executable(${PROJECT_NAME} src/main.cpp)
 endif()
 
-
 target_link_libraries(${PROJECT_NAME} PRIVATE
     BoardRepresentationLib
     MoveGeneratorLib 
     TTsLib
     EvalLib
 )
-target_include_directories(${PROJECT_NAME} PRIVATE src/BoardRepresentation)
 
+target_include_directories(${PROJECT_NAME} PRIVATE src/BoardRepresentation)
 
 # Domyślny typ budowy
 if(NOT CMAKE_BUILD_TYPE)
@@ -42,9 +41,15 @@ endif()
 
 # Flagi kompilatora
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-#set(CMAKE_CXX_FLAGS_DEBUG "-mavx2")
+set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -DNDEBUG")
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-#set(CMAKE_CXX_FLAGS_RELEASE "-mavx2")
+# Włączenie LTO (IPO) jeśli jest obsługiwane przez kompilator
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
 
-
+if(ipo_supported)
+    message(STATUS "IPO / LTO supported, enabling interprocedural optimization for Release build")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+else()
+    message(STATUS "IPO / LTO not supported: ${ipo_error}")
+endif()

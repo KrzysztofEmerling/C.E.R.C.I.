@@ -34,5 +34,6 @@
 .vscode/
 
 build/
+build-test/
 
 chess
