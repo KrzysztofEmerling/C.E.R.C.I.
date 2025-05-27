@@ -14,11 +14,9 @@ u64 PerftCount(BoardState &state, int depth)
 
     for (int i = 0; i < movesList.movesCount; i++)
     {
-        Move move = movesList.moves[i];
-
-        BoardState newState = state;
-        newState.MakeMove(move);
-        nodes += PerftCount(newState, depth - 1);
+        state.MakeMove(movesList.moves[i]);
+        nodes += PerftCount(state, depth - 1);
+        state.UndoMove();
     }
 
     return nodes;
@@ -38,9 +36,9 @@ u64 Perft(BoardState &state, int depth)
     {
         Move move = movesList.moves[i];
 
-        BoardState newState = state;
-        newState.MakeMove(move);
-        nodes += PerftCount(newState, depth - 1);
+        state.MakeMove(movesList.moves[i]);
+        nodes += PerftCount(state, depth - 1);
+        state.UndoMove();
 
         char f1 = 'a' + (move.startingSquere % 8);
         char r1 = '1' + (move.startingSquere / 8);

@@ -98,7 +98,7 @@ int main()
 
         // Ruch bota
         std::cout << "\nBot myśli...\n";
-        Move botMove = Eval::FindBestMove(chessBoard, 4);
+        Move botMove = Eval::FindBestMove(chessBoard, 5);
 
         char f1 = 'a' + (botMove.startingSquere % 8);
         char r1 = '1' + (botMove.startingSquere / 8);

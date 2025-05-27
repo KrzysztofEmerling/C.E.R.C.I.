@@ -66,7 +66,7 @@ void PerftTests::RunLongTests()
             BoardState state(testCase.fen);
 
             auto start = high_resolution_clock::now();
-            uint64_t nodes = PerftCount(state, depth);
+            u64 nodes = PerftCount(state, depth);
             auto end = high_resolution_clock::now();
 
             double elapsed = duration<double, std::milli>(end - start).count();
@@ -114,7 +114,7 @@ void PerftTests::RunQuickTest()
         const auto &[depth, expectedNodes] = *testCase.expectedNodes.find(5);
         BoardState state(testCase.fen);
         auto start = high_resolution_clock::now();
-        uint64_t nodes = PerftCount(state, depth);
+        u64 nodes = PerftCount(state, depth);
         auto end = high_resolution_clock::now();
 
         double elapsed = duration<double, std::milli>(end - start).count();
