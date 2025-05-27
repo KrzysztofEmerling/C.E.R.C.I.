@@ -1,2 +1,0 @@
-/usr/bin/ar qc libBoardRepresentationLib.a CMakeFiles/BoardRepresentationLib.dir/FENParcer.cpp.o CMakeFiles/BoardRepresentationLib.dir/ZobristHash.cpp.o
-/usr/bin/ranlib libBoardRepresentationLib.a
