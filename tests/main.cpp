@@ -1,6 +1,7 @@
 #include <string>
 
 #include "PerftTests.h"
+#include "zHashCalculationTests.h"
 
 int main(int argc, char *argv[])
 {
@@ -19,10 +20,12 @@ int main(int argc, char *argv[])
     if (quickMode)
     {
         PerftTests::RunQuickTests();
+        zHashCalculationTests::RunTests();
     }
     else
     {
         PerftTests::RunLongTests();
+        zHashCalculationTests::RunTests();
     }
 
     return 0;

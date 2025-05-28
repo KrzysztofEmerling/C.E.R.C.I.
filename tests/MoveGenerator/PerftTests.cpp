@@ -1,5 +1,6 @@
 #include "PerftTests.h"
 #include "../PerftTestCase.h"
+#include "../TestUtils.h"
 
 void PerftTests::RunLongTests()
 {
@@ -19,15 +20,13 @@ void PerftTests::RunLongTests()
             u64 nodes = PerftCount(state, depth);
             auto end = high_resolution_clock::now();
 
-            double elapsed = duration<double, std::milli>(end - start).count();
-
             bool passed = (nodes == expectedNodes);
 
             std::cout << "Depth " << depth
                       << ": Nodes = " << nodes
                       << ", Expected = " << expectedNodes
                       << ", " << (passed ? "PASSED" : "FAILED")
-                      << " (" << elapsed << " ms)"
+                      << " (" << FormatTime(end - start) << " )"
                       << "\n";
 
             if (!passed)
@@ -40,7 +39,7 @@ void PerftTests::RunLongTests()
         std::cout << "-------------------------------------------------------------\n";
     }
     auto testModuleTimeEnd = high_resolution_clock::now();
-    std::cout << "Total long preft test time: " << testModuleTimeEnd - testModuleTimeStart << "\n";
+    std::cout << "Total long preft test time: " << FormatTime(testModuleTimeEnd - testModuleTimeStart) << "\n";
     std::cout << "-------------------------------------------------------------\n"
               << std::endl;
 }
@@ -60,7 +59,6 @@ void PerftTests::RunQuickTests()
         u64 nodes = PerftCount(state, depth);
         auto end = high_resolution_clock::now();
 
-        double elapsed = duration<double, std::milli>(end - start).count();
         bool passed = (nodes == expectedNodes);
 
         std::cout << "FEN: " << testCase.fen << "\n";
@@ -68,7 +66,7 @@ void PerftTests::RunQuickTests()
                   << ": Nodes = " << nodes
                   << ", Expected = " << expectedNodes
                   << ", " << (passed ? "PASSED" : "FAILED")
-                  << " (" << elapsed << " ms)\n\n";
+                  << " (" << FormatTime(end - start) << " ms)\n\n";
     }
     auto testModuleTimeEnd = high_resolution_clock::now();
     std::cout << "-------------------------------------------------------------\n";

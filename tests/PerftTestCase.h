@@ -12,7 +12,7 @@ struct PerftTestCase
     std::map<int, u64> expectedNodes;
 };
 
-std::vector<PerftTestCase> longTestCases = {
+static std::vector<PerftTestCase> longTestCases = {
     {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Start position
      {
          {1, 20},
@@ -66,7 +66,7 @@ std::vector<PerftTestCase> longTestCases = {
          {5, 674624},
          {6, 11030083}}}};
 
-std::vector<PerftTestCase> quickTestCases = {
+static std::vector<PerftTestCase> quickTestCases = {
     {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", {{5, 4865609}}},
     {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", {{5, 193690690}}},
     {"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", {{5, 89941194}}},
