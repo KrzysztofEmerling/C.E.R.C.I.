@@ -1,5 +1,6 @@
 #include "BoardUtils.h"
 #include "ZobristHash.h"
+#include "FENParcer.h"
 
 #ifndef DISABLE_REFZHASH_WARN
 #define REFZHASH_DEPRECATED [[deprecated("GetRefHash jest powolna, powinna być wywoływana tylko w testach, zdefiniuj DISABLE_REFZHASH_WARN by wyłączyć komunikat.")]]
@@ -65,6 +66,7 @@ public:
     inline bool CanWhiteLongCastel() const noexcept { return m_Flags.whiteLongCastelRights; }
     inline bool CanBlackShortCastel() const noexcept { return m_Flags.blackShortCastelRights; }
     inline bool CanBlackLongCastel() const noexcept { return m_Flags.blackLongCastelRights; }
+    inline String FEN() { return SaveFEN(m_Flags, m_Pieces); }
 
     inline uint8_t GetHalfMoves() const noexcept { return m_Flags.halfmoveClock; }
     inline uint16_t GetMoves() const noexcept { return m_Flags.moves; }
