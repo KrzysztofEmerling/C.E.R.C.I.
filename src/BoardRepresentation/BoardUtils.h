@@ -72,6 +72,13 @@ struct Move
     Move() : startingSquere(0), destSquere(0), flag(NormalMove), categorie(Quiet) {}
     Move(uint8_t start, uint8_t dest, MovesFlags flag, uint8_t categorie) : startingSquere(start), destSquere(dest), flag(flag), categorie(categorie) {}
     // Move(uint8_t start, uint8_t dest, uint8_t categorie) : startingSquere(start), destSquere(dest), flag(NormalMove), categorie(categorie) {}
+
+    bool operator==(const Move &other)
+    {
+        return other.destSquere == destSquere &
+               other.startingSquere == startingSquere &
+               other.flag == flag;
+    }
 };
 
 struct MoveList

@@ -3,18 +3,8 @@
 
 int Eval::staticEval(const BoardState &board)
 {
-    if ( // board.IsFiftyMoveRule() || board.IsInsufficientMaterial() ||
-        board.IsStalemate()
-        // || board.IsThreefoldRepetition()
-    )
-        return 0;
-    if (board.IsCheckmate())
-    {
-        return minEvalScore;
-    }
-
     const u64f *pieces = board.GetBBs();
-    int eval = 2 * (-1 * board.GetFlags().whiteOnMove);
+    int eval = 2;
 
     int allPiecesCount = 0;
     for (int i = 0; i < 12; i++)
@@ -62,10 +52,13 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
     if (depth == 0)
         return staticEval(board);
 
+    int bestEval = minEvalScore;
+    if (m_TT.probe(board.GetHash(), depth, bestEval))
+        return bestEval;
+
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
 
-    int bestEval = minEvalScore;
     for (size_t i = 0; i < movesList.movesCount; i++)
     {
         board.MakeMove(movesList.moves[i]);
@@ -81,6 +74,8 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
         if (alpha >= beta) // Beta cutoff
             break;
     }
+
+    m_TT.store(board.GetHash(), depth, bestEval);
     return bestEval;
 }
 
