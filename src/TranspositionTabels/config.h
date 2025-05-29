@@ -2,8 +2,7 @@
 
 #pragma once
 
-#define TT_MOVEGEN_SIZE_MB 32
-#define TT_EVAL_SIZE_MB 8
+#define TT_EVAL_SIZE_MB 16
 
 constexpr std::size_t MB_TO_BYTES(std::size_t mb)
 {
