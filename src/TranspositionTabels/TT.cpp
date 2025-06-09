@@ -18,14 +18,14 @@ void TT::store(u64 hash, int depth, int eval)
     m_EvalTT[index] = entry;
 }
 
-bool TT::probe(u64 hash, int depth, int &eval) const
+bool TT::probe(u64 hash, int depth, int &eval_ref) const
 {
     std::size_t index = indexFromHash(hash);
     const TTEntry &entry = m_EvalTT[index];
 
     if (entry.zHash == hash && entry.depth == depth)
     {
-        eval = entry.eval;
+        eval_ref = entry.eval;
         return true;
     }
 

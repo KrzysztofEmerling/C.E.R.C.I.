@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cstdlib>
 
+#include <thread>
+#include <chrono>
+
 #include "BoardState.h"
 #include "Eval.h"
 #include "Perft.h"
@@ -11,11 +14,11 @@ int main()
 
     while (true)
     {
-#ifdef _WIN32
-        int val = system("cls");
-#else
-        int val = system("clear");
-#endif
+        // #ifdef _WIN32
+        //         int val = system("cls");
+        // #else
+        //         int val = system("clear");
+        // #endif
 
         chessBoard.DrawBoard();
 
@@ -60,8 +63,8 @@ int main()
 
         chessBoard.MakeMove(botMove);
 
-        // Można dodać krótkie opóźnienie, aby nie migało zbyt szybko (opcjonalnie)
-        // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // Można dodać krótkie opóźnienie, aby nie migało zbyt szybko(opcjonalnie)
+        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
     }
 
     return 0;
