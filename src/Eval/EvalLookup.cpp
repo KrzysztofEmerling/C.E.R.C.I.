@@ -1,9 +1,9 @@
 #include "Eval.h"
 
-const int Eval::PiecesValues[12] = {
-    100, 320, 330, 500, 900, 20000,      // białe: P, N, B, R, Q, K
-    -100, -320, -330, -500, -900, -20000 // czarne: p, n, b, r, q, k
+const int Eval::PiecesValues[6] = {
+    100, 300, 350, 500, 900, 2000 // białe: P, N, B, R, Q, K
 };
+
 const int Eval::PiecesOpeningPositionTable[6][64] = {
     {0, 0, 0, 0, 0, 0, 0, 0,
      10, 10, 10, 10, 10, 10, 10, 10,

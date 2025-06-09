@@ -11,7 +11,7 @@ int main()
     // r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
     // 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1
     // pozycja dla prowadzącego: qqqqkqqq/qqqqqqqq/qqqqqqqq/qqqqqqqqq/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1"
-    BoardState chessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    BoardState chessBoard("qqqqkqqq/qqqqqqqq/qqqqqqqq/qqqqqqqqq/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1");
 
     while (true)
     {
