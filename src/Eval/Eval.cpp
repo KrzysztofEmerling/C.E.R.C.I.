@@ -1,50 +1,54 @@
 #include "Eval.h"
 #include "MoveGenerator.h"
 
+#include <iostream>
+#define EQ_BAIAS 120
 int Eval::staticEval(const BoardState &board)
 {
     const u64f *pieces = board.GetBBs();
     int eval = 0;
     int allPiecesCount = 0;
 
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 5; i++)
     {
         int wCount = std::popcount(pieces[i]);
         int bCount = std::popcount(pieces[i + 6]);
+
         allPiecesCount += wCount + bCount;
         eval += (wCount - bCount) * PiecesValues[i];
     }
-
     if (allPiecesCount > 32)
         allPiecesCount = 32;
     int isEndGame = ((32 - allPiecesCount) * 1024) / 32;
+    int activityScore = 0;
 
-    // Białe
     for (int i = 0; i < 6; i++)
     {
-        u64f piece = pieces[i];
-        while (piece)
-        {
-            int index = __builtin_ctzll(piece);
-            piece &= piece - 1;
-            eval += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 1024;
-        }
-    }
+        u64f wPiece = pieces[i];
+        u64f bPiece = pieces[i + 6];
 
-    // Czarne
-    for (int i = 6; i < 12; i++)
-    {
-        u64f piece = pieces[i];
-        while (piece)
+        // Białe
+        while (wPiece)
         {
-            int index = __builtin_ctzll(piece);
-            piece &= piece - 1;
+            int index = __builtin_ctzll(wPiece);
+            wPiece &= wPiece - 1;
+            activityScore += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 2048;
+        }
+        // Czarne
+
+        while (bPiece)
+        {
+            int index = __builtin_ctzll(bPiece);
+            bPiece &= bPiece - 1;
             int mirroredIndex = index ^ 56;
-            eval -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][mirroredIndex] + isEndGame * PiecesEndgamePositionTable[i][mirroredIndex]) / 1024;
+            activityScore -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][mirroredIndex] + isEndGame * PiecesEndgamePositionTable[i][mirroredIndex]) / 2048;
         }
     }
+    eval += activityScore;
 
-    return board.IsWhiteMove() ? eval : -eval;
+    return board.IsWhiteMove()
+               ? eval + EQ_BAIAS
+               : -eval + EQ_BAIAS;
 }
 
 int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
@@ -55,8 +59,8 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
         return -matScore - depth;
 
     if (depth == 0)
-        // return quiescenceSearch(board, alpha, beta);
-        return staticEval(board);
+        return quiescenceSearch(board, alpha, beta);
+    // return staticEval(board);
 
     int bestEval = minEvalScore;
     if (m_TT.probe(board.GetHash(), depth, bestEval))
@@ -98,7 +102,7 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
         return beta;
     if (qEval > alpha)
         alpha = qEval;
-    if (depth <= -5)
+    if (depth <= -8)
         return alpha;
 
     MoveList movesList;
@@ -146,11 +150,11 @@ Move Eval::FindBestMove(BoardState &board, int depth)
         board.UndoMove();
 
         // Debugowanie ruchów
-        char f1 = 'a' + (move.startingSquere % 8);
-        char r1 = '1' + (move.startingSquere / 8);
-        char f2 = 'a' + (move.destSquere % 8);
-        char r2 = '1' + (move.destSquere / 8);
-        std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "  Wartość: " << eval << "\n";
+        // char f1 = 'a' + (move.startingSquere % 8);
+        // char r1 = '1' + (move.startingSquere / 8);
+        // char f2 = 'a' + (move.destSquere % 8);
+        // char r2 = '1' + (move.destSquere / 8);
+        // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "  Wartość: " << eval << "\n";
 
         if (eval > bestEval)
         {
@@ -160,6 +164,10 @@ Move Eval::FindBestMove(BoardState &board, int depth)
         if (eval > alpha)
             alpha = eval;
     }
-
+    char f1 = 'a' + (bestMove.startingSquere % 8);
+    char r1 = '1' + (bestMove.startingSquere / 8);
+    char f2 = 'a' + (bestMove.destSquere % 8);
+    char r2 = '1' + (bestMove.destSquere / 8);
+    std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "  Wartość: " << bestEval << "\n";
     return bestMove;
 }

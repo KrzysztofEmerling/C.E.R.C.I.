@@ -43,34 +43,14 @@ bool BoardState::IsStalemate() const
 }
 bool BoardState::IsInsufficientMaterial() const
 {
-    if (m_Flags.whiteOnMove)
-    {
-        if (std::popcount(m_Pieces[WhitePawns] | m_Pieces[WhiteRooks] | m_Pieces[WhiteQueens]))
-            return false;
+    // Bez zgodności z 2 gońcami tego samego koloru
+    return !((std::popcount(m_Pieces[WhitePawns] | m_Pieces[WhiteRooks] | m_Pieces[WhiteQueens])) |
+             (std::popcount(m_Pieces[WhiteBishops]) > 1) |
+             (m_Pieces[WhiteBishops] && std::popcount(m_Pieces[WhiteBishops] | m_Pieces[WhiteKnights]) > 1) |
+             (std::popcount(m_Pieces[WhiteKnights]) > 2) |
 
-        if (std::popcount(m_Pieces[WhiteBishops]) > 1)
-            return false;
-
-        if (m_Pieces[WhiteBishops] && std::popcount(m_Pieces[WhiteBishops] | m_Pieces[WhiteKnights]) > 1)
-            return false;
-
-        if (std::popcount(m_Pieces[WhiteKnights]) > 2)
-            return false;
-    }
-    else
-    {
-        if (std::popcount(m_Pieces[BlackPawns] | m_Pieces[BlackRooks] | m_Pieces[BlackQueens]))
-            return false;
-
-        if (std::popcount(m_Pieces[BlackBishops]) > 1)
-            return false;
-
-        if (m_Pieces[BlackBishops] && std::popcount(m_Pieces[BlackBishops] | m_Pieces[BlackKnights]) > 1)
-            return false;
-
-        if (std::popcount(m_Pieces[BlackKnights]) > 2)
-            return false;
-    }
-
-    return true;
+             (std::popcount(m_Pieces[BlackPawns] | m_Pieces[BlackRooks] | m_Pieces[BlackQueens])) |
+             (std::popcount(m_Pieces[BlackBishops]) > 1) |
+             (m_Pieces[BlackBishops] && std::popcount(m_Pieces[BlackBishops] | m_Pieces[BlackKnights]) > 1) |
+             (std::popcount(m_Pieces[BlackKnights]) > 2));
 }
