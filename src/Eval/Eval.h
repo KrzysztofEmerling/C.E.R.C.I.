@@ -1,4 +1,3 @@
-#include "BoardUtils.h"
 #include "BoardState.h"
 #include "TT.h"
 
@@ -10,6 +9,8 @@ class Eval
 {
 public:
     static Move FindBestMoveFixedDepth(BoardState &board, int depth);
+    static Move FindBestMove_MCTS(BoardState &board, int msToThink);
+
     static Move FindBestMove(BoardState &board, int msToThink);
 
 private:
