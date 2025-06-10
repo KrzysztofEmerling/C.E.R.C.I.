@@ -1,5 +1,7 @@
 #include "Eval.h"
 #include "MoveGenerator.h"
+#include "MCTS.h"
+
 #include <algorithm>
 #include <iostream>
 #include <chrono>
@@ -181,82 +183,86 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
     return bestMove;
 }
 
-Move Eval::FindBestMove(BoardState &board, int msToThink)
+Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
 {
-    m_StopSearch = false;
-    MoveList movesList;
-    MoveGenerator::GetLegalMoves(board, movesList);
+    using namespace std::chrono;
+    auto startTime = high_resolution_clock::now();
 
-    std::pair<Move, int> moveScores[218];
-    int count = movesList.movesCount;
-    for (int i = 0; i < count; ++i)
+    MCTS_node root(nullptr);
+
+    // Pierwsze poziomowe rozwinięcie
+    MoveList rootMoves;
+    MoveGenerator::GetLegalMoves(board, rootMoves);
+
+    for (int i = 0; i < rootMoves.movesCount; ++i)
     {
-        Move move = movesList.moves[i];
-        moveScores[i] = {move, scoreMove(move)};
+        root.AddChild(rootMoves.moves[i]);
     }
 
-    std::sort(moveScores, moveScores + count,
-              [](const auto &a, const auto &b)
-              { return a.second > b.second; });
-
-    Move bestMove = moveScores[0].first;
-    int bestEval = minEvalScore;
-    int alpha = minEvalScore;
-    int beta = maxEvalScore;
-
-    std::thread timerThread([msToThink]()
-                            {
-        std::this_thread::sleep_for(std::chrono::milliseconds(msToThink));
-        m_StopSearch = true; });
-    for (int depth = 1; depth <= 100; ++depth)
+    BoardState state = board;
+    while (duration_cast<milliseconds>(high_resolution_clock::now() - startTime).count() < msToThink)
     {
-        Move currentBest = bestMove;
-        int currentBestEval = minEvalScore;
+        MCTS_node *node = &root;
 
-        for (int i = 0; i < count; ++i)
+        // 1. Selection
+        while (!node->IsLeaf())
         {
-            if (m_StopSearch)
-                break;
+            double parentVisits = node->GetVisitCount();
+            double bestScore = -1.0;
+            MCTS_node *bestChild = nullptr;
 
-            board.MakeMove(moveScores[i].first);
-            int eval = -alphaBeta(board, depth - 1, -beta, -alpha);
-            board.UndoMove();
-
-            moveScores[i].second = eval;
-
-            if (eval > currentBestEval)
+            for (int i = 0; i < node->GetChildrenCount(); ++i)
             {
-                currentBestEval = eval;
-                currentBest = moveScores[i].first;
+                MCTS_node *child = node->GetChild(i);
+                double score = child->GetUCB(parentVisits);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestChild = child;
+                }
             }
-            if (eval > alpha)
-                alpha = eval;
+
+            node = bestChild;
+            state.MakeMove(node->GetMove());
         }
 
-        if (m_StopSearch)
+        // 2. Expansion
+        MoveList moves;
+        MoveGenerator::GetLegalMoves(state, moves);
+
+        if (moves.movesCount > 0 && !state.IsCheckmate())
         {
-            bestMove = currentBest;
-            bestEval = currentBestEval;
-
-            char f1 = 'a' + (bestMove.startingSquere % 8);
-            char r1 = '1' + (bestMove.startingSquere / 8);
-            char f2 = 'a' + (bestMove.destSquere % 8);
-            char r2 = '1' + (bestMove.destSquere / 8);
-            std::cout << "osiągnięta Głębokość: " << depth
-                      << "  Najlepszy ruch: " << f1 << r1 << f2 << r2
-                      << "  Ocena: " << bestEval << "\n";
-            break;
+            int r = rand() % moves.movesCount;
+            Move move = moves.moves[r];
+            MCTS_node *newNode = node->AddChild(move);
+            node = newNode;
+            state.MakeMove(move);
         }
 
-        std::sort(moveScores, moveScores + count,
-                  [](const auto &a, const auto &b)
-                  { return a.second > b.second; });
+        // 3. Simulation
+        int result = quiescenceSearch(state, -matScore, matScore);
+        // 4. Backpropagation
+        while (node != nullptr)
+        {
+            node->UpdateStats(result);
+            node = node->GetParent();
+        }
     }
 
-    if (timerThread.joinable())
-        timerThread.join();
+    // Po zakończeniu: wybierz najczęściej odwiedzany ruch
+    MCTS_node *bestChild = nullptr;
+    int bestVisits = -1;
+    for (int i = 0; i < root.GetChildrenCount(); ++i)
+    {
+        MCTS_node *child = root.GetChild(i);
+        if (child->GetVisitCount() > bestVisits)
+        {
+            bestVisits = child->GetVisitCount();
+            bestChild = child;
+        }
+    }
 
-    return bestMove;
+    return bestChild ? bestChild->GetMove() : Move();
 }
 
 int Eval::scoreMove(const Move &move)
