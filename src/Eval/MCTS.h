@@ -30,5 +30,5 @@ public:
 
     MCTS_node *GetBestChild() const;
 
-    double GetUCB(double parentVisits, double exploration = 1.41) const;
+    double GetUCB(double parentVisits, double exploration = 14.15) const;
 };

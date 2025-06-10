@@ -274,19 +274,40 @@ Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
     }
 
     // Po zakończeniu: wybierz najczęściej odwiedzany ruch
+
+    // Odwiedziny
+    // MCTS_node *bestChild = nullptr;
+    // int bestVisits = -1;
+    // for (int i = 0; i < root.GetChildrenCount(); ++i)
+    // {
+    //     MCTS_node *child = root.GetChild(i);
+    //     if (child->GetVisitCount() > bestVisits)
+    //     {
+    //         bestVisits = child->GetVisitCount();
+    //         bestChild = child;
+    //     }
+    // }
+
+    // Evaluacja
     MCTS_node *bestChild = nullptr;
-    int bestVisits = -1;
+    int bestEval = minEvalScore;
     for (int i = 0; i < root.GetChildrenCount(); ++i)
     {
         MCTS_node *child = root.GetChild(i);
-        if (child->GetVisitCount() > bestVisits)
+        if (child->GetEvalAverage() > bestEval)
         {
-            bestVisits = child->GetVisitCount();
+            bestEval = child->GetVisitCount();
             bestChild = child;
         }
     }
+    Move move = bestChild->GetMove();
+    char f1 = 'a' + (move.startingSquere % 8);
+    char r1 = '1' + (move.startingSquere / 8);
+    char f2 = 'a' + (move.destSquere % 8);
+    char r2 = '1' + (move.destSquere / 8);
 
-    return bestChild ? bestChild->GetMove() : Move();
+    std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "BestEval: " << bestEval << "\n";
+    return move;
 }
 
 int Eval::scoreMove(const BoardState &board, const Move &move)
