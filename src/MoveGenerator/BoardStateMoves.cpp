@@ -36,7 +36,7 @@ bool BoardState::UndoMove()
     return true;
 }
 
-int BoardState::findPieceAt(u64 squareBB, bool white)
+int BoardState::FindPieceAt(u64 squareBB, bool white) const
 {
     int offset = white * 6;
     for (int i = 6 - offset; i < 12 - offset; i++)

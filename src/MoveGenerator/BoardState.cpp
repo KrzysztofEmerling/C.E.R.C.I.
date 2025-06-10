@@ -86,8 +86,8 @@ void BoardState::MakeMove(Move move)
 
     u64 startingPos = BitboardsIndecies[move.startingSquere];
     u64 destPos = BitboardsIndecies[move.destSquere];
-    int figToMove = findPieceAt(startingPos, m_Flags.whiteOnMove);
-    int figToCapture = findPieceAt(destPos, !m_Flags.whiteOnMove);
+    int figToMove = FindPieceAt(startingPos, m_Flags.whiteOnMove);
+    int figToCapture = FindPieceAt(destPos, !m_Flags.whiteOnMove);
 
     switch (move.flag)
     {
