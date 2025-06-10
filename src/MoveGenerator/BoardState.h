@@ -53,7 +53,7 @@ public:
 
     void DrawBoard() const;
 
-    inline u64f GetBB(BitBoardsIndecis pieceType) const noexcept { return m_Pieces[pieceType]; }
+    inline u64f GetBB(int pieceType) const noexcept { return m_Pieces[pieceType]; }
     inline const u64f *GetBBs() const noexcept { return m_Pieces; }
     inline const u64 GetHash() const { return m_ZHash.GetHash(); }
 
@@ -81,8 +81,9 @@ public:
     bool IsStalemate() const;
     bool IsInsufficientMaterial() const;
 
+    int FindPieceAt(u64 squareBB, bool white) const;
+
 private:
-    int findPieceAt(u64 squareBB, bool white);
     void handleNormalMove(int figToMove, int startIndex, u64 startingPos, int figToCapture, int destIndex, u64 destPos);
     void handleDoublePush(int figToMove, int startIndex, int destIndex, u64 startingPos, u64 destPos);
     void handlePromotion(int figToMove, int startIndex, int figToCapture, int destIndex, u64 startingPos, u64 destPos, int new_piece);

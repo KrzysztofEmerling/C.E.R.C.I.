@@ -6,7 +6,8 @@
 #include <iostream>
 #include <chrono>
 
-#define EQ_BAIAS 217
+// #define EQ_BAIAS 217
+#define EQ_BAIAS 0
 std::atomic<bool> Eval::m_StopSearch = false;
 
 int Eval::staticEval(const BoardState &board)
@@ -145,7 +146,7 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
     for (int i = 0; i < count; ++i)
     {
         Move move = movesList.moves[i];
-        moveScores[i] = {move, scoreMove(move)};
+        moveScores[i] = {move, scoreMove(board, move)};
     }
 
     std::sort(moveScores, moveScores + count,
@@ -178,8 +179,20 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
 
         if (alpha >= beta)
             break;
-    }
 
+        // char f1 = 'a' + (bestMove.startingSquere % 8);
+        // char r1 = '1' + (bestMove.startingSquere / 8);
+        // char f2 = 'a' + (bestMove.destSquere % 8);
+        // char r2 = '1' + (bestMove.destSquere / 8);
+
+        // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << bestEval << "\n";
+    }
+    char f1 = 'a' + (bestMove.startingSquere % 8);
+    char r1 = '1' + (bestMove.startingSquere / 8);
+    char f2 = 'a' + (bestMove.destSquere % 8);
+    char r2 = '1' + (bestMove.destSquere / 8);
+
+    std::cout << "Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << bestEval << "\n";
     return bestMove;
 }
 
@@ -232,8 +245,19 @@ Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
 
         if (moves.movesCount > 0 && !state.IsCheckmate())
         {
-            int r = rand() % moves.movesCount;
-            Move move = moves.moves[r];
+            // Posortuj ruchy wg heurystyki
+            std::pair<Move, int> scoredMoves[218];
+            for (int i = 0; i < moves.movesCount; ++i)
+                scoredMoves[i] = {moves.moves[i], scoreMove(board, moves.moves[i])};
+
+            std::sort(scoredMoves, scoredMoves + moves.movesCount,
+                      [](const auto &a, const auto &b)
+                      { return a.second > b.second; });
+
+            int topN = (moves.movesCount < 4) ? moves.movesCount : 4;
+            int pick = rand() % topN;
+            Move move = scoredMoves[pick].first;
+
             MCTS_node *newNode = node->AddChild(move);
             node = newNode;
             state.MakeMove(move);
@@ -265,9 +289,18 @@ Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
     return bestChild ? bestChild->GetMove() : Move();
 }
 
-int Eval::scoreMove(const Move &move)
+int Eval::scoreMove(const BoardState &board, const Move &move)
 {
     int score = 0;
+
+    bool isWhiteMove = board.GetFlags().whiteOnMove;
+    int movingPiece = board.FindPieceAt(BitboardsIndecies[move.startingSquere], isWhiteMove) % 6;
+
+    // if (movingPiece == 5) // zachęcenie do roszady
+    //     score += (BitboardsIndecies[move.destSquere] & 0xbbffffffffffffbb == 0) ? 1000 : -1000;
+    // else // aktywność figór
+    if (movingPiece != 5)
+        score += (BitboardsIndecies[move.destSquere] & 0xffffc38181c3ffff == 0) ? 200 : 0;
 
     if (move.categorie & Promotion)
     {
@@ -282,7 +315,11 @@ int Eval::scoreMove(const Move &move)
     }
 
     if (move.categorie & Capture)
+    {
         score += 5000;
+        int victime = board.FindPieceAt(BitboardsIndecies[move.destSquere], !isWhiteMove) % 6;
+        score += victime - movingPiece;
+    }
 
     if (move.flag == Castling)
         score += 3000;

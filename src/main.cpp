@@ -52,18 +52,16 @@ int main()
         std::cout << "\n"
                   << (chessBoard.GetFlags().whiteOnMove ? "Białe" : "Czarne") << " (Bot) myślą...\n";
 
-        // Move botMove = !chessBoard.GetFlags().whiteOnMove ? Eval::FindBestMove(chessBoard, 5000) : Eval::FindBestMoveFixedDepth(chessBoard, 6);
-        Move botMove = Eval::FindBestMove_MCTS(chessBoard, 7000);
-        char f1 = 'a' + (botMove.startingSquere % 8);
-        char r1 = '1' + (botMove.startingSquere / 8);
-        char f2 = 'a' + (botMove.destSquere % 8);
-        char r2 = '1' + (botMove.destSquere / 8);
+        Move botMove = Eval::FindBestMoveFixedDepth(chessBoard, 7);
+        // Move botMove = Eval::FindBestMove_MCTS(chessBoard, 7000);
+        // char f1 = 'a' + (botMove.startingSquere % 8);
+        // char r1 = '1' + (botMove.startingSquere / 8);
+        // char f2 = 'a' + (botMove.destSquere % 8);
+        // char r2 = '1' + (botMove.destSquere / 8);
 
-        std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "\n";
+        // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "\n";
 
         chessBoard.MakeMove(botMove);
-
-        // Można dodać krótkie opóźnienie, aby nie migało zbyt szybko(opcjonalnie)
         // std::this_thread::sleep_for(std::chrono::milliseconds(2500));
     }
 
