@@ -46,11 +46,11 @@ enum MovesFlags
 {
     NormalMove = 1,
     DoublePush = 2,
-    PromotionQueen = 4,
-    PromotionRook = 8,
-    PromotionKnight = 16,
-    PromotionBishop = 32,
-    EmpassantMove = 64,
+    EmpassantMove = 4,
+    PromotionKnight = 8,
+    PromotionBishop = 16,
+    PromotionRook = 32,
+    PromotionQueen = 64,
     Castling = 128
 };
 

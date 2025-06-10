@@ -1,8 +1,12 @@
 #include "Eval.h"
 #include "MoveGenerator.h"
-
+#include <algorithm>
 #include <iostream>
-#define EQ_BAIAS 120
+#include <chrono>
+
+#define EQ_BAIAS 217
+std::atomic<bool> Eval::m_StopSearch = false;
+
 int Eval::staticEval(const BoardState &board)
 {
     const u64f *pieces = board.GetBBs();
@@ -35,7 +39,6 @@ int Eval::staticEval(const BoardState &board)
             activityScore += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 2048;
         }
         // Czarne
-
         while (bPiece)
         {
             int index = __builtin_ctzll(bPiece);
@@ -60,7 +63,6 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
 
     if (depth == 0)
         return quiescenceSearch(board, alpha, beta);
-    // return staticEval(board);
 
     int bestEval = minEvalScore;
     if (m_TT.probe(board.GetHash(), depth, bestEval))
@@ -88,7 +90,6 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
     m_TT.store(board.GetHash(), depth, bestEval);
     return bestEval;
 }
-
 int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
 {
     if (board.IsCheckmate())
@@ -102,6 +103,8 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
         return beta;
     if (qEval > alpha)
         alpha = qEval;
+
+    // zabezpieczenie przed eksplozją głębokości
     if (depth <= -8)
         return alpha;
 
@@ -127,47 +130,162 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
     return alpha;
 }
 
-#include <iostream> // potrzebne do std::cout
-
-Move Eval::FindBestMove(BoardState &board, int depth)
+Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
 {
+    m_StopSearch = false;
+
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
 
-    Move bestMove = movesList.moves[0];
+    std::pair<Move, int> moveScores[218];
+    int count = movesList.movesCount;
+
+    for (int i = 0; i < count; ++i)
+    {
+        Move move = movesList.moves[i];
+        moveScores[i] = {move, scoreMove(move)};
+    }
+
+    std::sort(moveScores, moveScores + count,
+              [](const auto &a, const auto &b)
+              { return a.second > b.second; });
+
+    Move bestMove = moveScores[0].first;
     int bestEval = minEvalScore;
     int alpha = minEvalScore;
     int beta = maxEvalScore;
 
-    std::cout << "Rozważane ruchy dla głębokości " << depth << ":\n";
-
-    for (int i = 0; i < movesList.movesCount; i++)
+    for (int i = 0; i < count; ++i)
     {
-        Move move = movesList.moves[i];
+        if (m_StopSearch)
+            break;
 
+        const Move &move = moveScores[i].first;
         board.MakeMove(move);
         int eval = -alphaBeta(board, depth - 1, -beta, -alpha);
         board.UndoMove();
-
-        // Debugowanie ruchów
-        // char f1 = 'a' + (move.startingSquere % 8);
-        // char r1 = '1' + (move.startingSquere / 8);
-        // char f2 = 'a' + (move.destSquere % 8);
-        // char r2 = '1' + (move.destSquere / 8);
-        // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "  Wartość: " << eval << "\n";
 
         if (eval > bestEval)
         {
             bestEval = eval;
             bestMove = move;
         }
+
         if (eval > alpha)
             alpha = eval;
+
+        if (alpha >= beta)
+            break;
     }
-    char f1 = 'a' + (bestMove.startingSquere % 8);
-    char r1 = '1' + (bestMove.startingSquere / 8);
-    char f2 = 'a' + (bestMove.destSquere % 8);
-    char r2 = '1' + (bestMove.destSquere / 8);
-    std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "  Wartość: " << bestEval << "\n";
+
     return bestMove;
+}
+
+Move Eval::FindBestMove(BoardState &board, int msToThink)
+{
+    m_StopSearch = false;
+    MoveList movesList;
+    MoveGenerator::GetLegalMoves(board, movesList);
+
+    std::pair<Move, int> moveScores[218];
+    int count = movesList.movesCount;
+    for (int i = 0; i < count; ++i)
+    {
+        Move move = movesList.moves[i];
+        moveScores[i] = {move, scoreMove(move)};
+    }
+
+    std::sort(moveScores, moveScores + count,
+              [](const auto &a, const auto &b)
+              { return a.second > b.second; });
+
+    Move bestMove = moveScores[0].first;
+    int bestEval = minEvalScore;
+    int alpha = minEvalScore;
+    int beta = maxEvalScore;
+
+    std::thread timerThread([msToThink]()
+                            {
+        std::this_thread::sleep_for(std::chrono::milliseconds(msToThink));
+        m_StopSearch = true; });
+    for (int depth = 1; depth <= 100; ++depth)
+    {
+        Move currentBest = bestMove;
+        int currentBestEval = minEvalScore;
+
+        for (int i = 0; i < count; ++i)
+        {
+            if (m_StopSearch)
+                break;
+
+            board.MakeMove(moveScores[i].first);
+            int eval = -alphaBeta(board, depth - 1, -beta, -alpha);
+            board.UndoMove();
+
+            moveScores[i].second = eval;
+
+            if (eval > currentBestEval)
+            {
+                currentBestEval = eval;
+                currentBest = moveScores[i].first;
+            }
+            if (eval > alpha)
+                alpha = eval;
+        }
+
+        if (m_StopSearch)
+        {
+            bestMove = currentBest;
+            bestEval = currentBestEval;
+
+            char f1 = 'a' + (bestMove.startingSquere % 8);
+            char r1 = '1' + (bestMove.startingSquere / 8);
+            char f2 = 'a' + (bestMove.destSquere % 8);
+            char r2 = '1' + (bestMove.destSquere / 8);
+            std::cout << "osiągnięta Głębokość: " << depth
+                      << "  Najlepszy ruch: " << f1 << r1 << f2 << r2
+                      << "  Ocena: " << bestEval << "\n";
+            break;
+        }
+
+        std::sort(moveScores, moveScores + count,
+                  [](const auto &a, const auto &b)
+                  { return a.second > b.second; });
+    }
+
+    if (timerThread.joinable())
+        timerThread.join();
+
+    return bestMove;
+}
+
+int Eval::scoreMove(const Move &move)
+{
+    int score = 0;
+
+    if (move.categorie & Promotion)
+    {
+        if (move.flag == PromotionQueen)
+            score += 9000;
+        else if (move.flag == PromotionRook)
+            score += 8000;
+        else if (move.flag == PromotionBishop)
+            score += 7000;
+        else if (move.flag == PromotionKnight)
+            score += 6000;
+    }
+
+    if (move.categorie & Capture)
+        score += 5000;
+
+    if (move.flag == Castling)
+        score += 3000;
+
+    if (move.categorie & Killer)
+        score += 2000;
+
+    if (move.categorie & Quiet)
+        score += 1000;
+
+    return score;
 }
