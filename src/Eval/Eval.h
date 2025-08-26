@@ -22,6 +22,7 @@ private:
     static int quiescenceSearch(BoardState &board, int alpha, int beta, int depth = 0);
 
     static int scoreMove(const BoardState &board, const Move &move);
+    static void stopSearchAfterDelay(int ms);
 
     static constexpr int maxEvalScore = 727379969;
     static constexpr int minEvalScore = -727379969;
