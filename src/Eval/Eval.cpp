@@ -6,7 +6,6 @@
 #include <iostream>
 #include <chrono>
 
-// #define EQ_BAIAS 217
 #define EQ_BAIAS 0
 std::atomic<bool> Eval::m_StopSearch = false;
 
@@ -184,15 +183,84 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
         // char r1 = '1' + (bestMove.startingSquere / 8);
         // char f2 = 'a' + (bestMove.destSquere % 8);
         // char r2 = '1' + (bestMove.destSquere / 8);
-
         // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << bestEval << "\n";
     }
-    char f1 = 'a' + (bestMove.startingSquere % 8);
-    char r1 = '1' + (bestMove.startingSquere / 8);
-    char f2 = 'a' + (bestMove.destSquere % 8);
-    char r2 = '1' + (bestMove.destSquere / 8);
+    // char f1 = 'a' + (bestMove.startingSquere % 8);
+    // char r1 = '1' + (bestMove.startingSquere / 8);
+    // char f2 = 'a' + (bestMove.destSquere % 8);
+    // char r2 = '1' + (bestMove.destSquere / 8);
+    // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << bestEval << "\n";
+    return bestMove;
+}
 
-    std::cout << "Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << bestEval << "\n";
+void Eval::stopSearchAfterDelay(int ms)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    Eval::m_StopSearch.store(true, std::memory_order_relaxed);
+}
+
+Move Eval::FindBestMove(BoardState &board, int msToThink)
+{
+    m_StopSearch = false;
+
+    MoveList movesList;
+    MoveGenerator::GetLegalMoves(board, movesList);
+
+    std::pair<Move, int> moveScores[218];
+    int count = movesList.movesCount;
+
+    for (int i = 0; i < count; ++i)
+    {
+        Move move = movesList.moves[i];
+        moveScores[i] = {move, scoreMove(board, move)};
+    }
+
+    std::sort(moveScores, moveScores + count,
+              [](const auto &a, const auto &b)
+              { return a.second > b.second; });
+
+    Move bestMove = moveScores[0].first;
+    int bestEval = minEvalScore;
+    int alpha = minEvalScore;
+    int beta = maxEvalScore;
+
+    int current_depth = 1;
+
+    std::thread(stopSearchAfterDelay, msToThink).detach();
+
+    while (!m_StopSearch)
+    {
+        for (int i = 0; i < count; ++i)
+        {
+            if (m_StopSearch)
+                break;
+
+            const Move &move = moveScores[i].first;
+            board.MakeMove(move);
+            int eval = -alphaBeta(board, current_depth - 1, -beta, -alpha);
+            moveScores[i].second = eval;
+
+            board.UndoMove();
+
+            if (eval > bestEval)
+            {
+                bestEval = eval;
+                bestMove = move;
+            }
+
+            if (eval > alpha)
+                alpha = eval;
+
+            if (alpha >= beta)
+                break;
+        }
+
+        std::sort(moveScores, moveScores + count,
+                  [](const auto &a, const auto &b)
+                  { return a.second > b.second; });
+        ++current_depth;
+    }
+
     return bestMove;
 }
 

@@ -53,7 +53,8 @@ int main()
                   << (chessBoard.GetFlags().whiteOnMove ? "Białe" : "Czarne") << " (Bot) myślą...\n";
 
         // Move botMove = Eval::FindBestMoveFixedDepth(chessBoard, 5);
-        Move botMove = Eval::FindBestMove_MCTS(chessBoard, 7000);
+        Move botMove = Eval::FindBestMove(chessBoard, 5000);
+        // Move botMove = Eval::FindBestMove_MCTS(chessBoard, 7000);
         // char f1 = 'a' + (botMove.startingSquere % 8);
         // char r1 = '1' + (botMove.startingSquere / 8);
         // char f2 = 'a' + (botMove.destSquere % 8);
