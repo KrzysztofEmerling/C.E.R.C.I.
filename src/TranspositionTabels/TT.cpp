@@ -1,5 +1,6 @@
 #include "TT.h"
 #include <iostream>
+#include <cstring>
 
 std::size_t TT::indexFromHash(u64 hash) const
 {
@@ -30,4 +31,9 @@ bool TT::probe(u64 hash, int depth, int &eval_ref) const
     }
 
     return false;
+}
+
+void TT::Clear()
+{
+    std::memset(m_EvalTT.get(), 0, TT_COUNT * sizeof(TTEntry));
 }

@@ -8,7 +8,10 @@
 
 #define EQ_BAIAS 0
 std::atomic<bool> Eval::m_StopSearch = false;
-
+void Eval::PrepareForNewGame()
+{
+    m_TT.Clear();
+}
 int Eval::staticEval(const BoardState &board)
 {
     const u64f *pieces = board.GetBBs();
@@ -208,15 +211,15 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
     return bestMove;
 }
 
-void Eval::stopSearchAfterDelay(int ms)
+void Eval::StopSearch()
 {
-    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     Eval::m_StopSearch.store(true, std::memory_order_relaxed);
 }
 
-Move Eval::FindBestMove(BoardState &board, int msToThink)
+Move Eval::FindBestMove(BoardState &board)
 {
-    m_StopSearch = false;
+
+    Eval::m_StopSearch.store(false, std::memory_order_relaxed);
 
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
@@ -240,8 +243,6 @@ Move Eval::FindBestMove(BoardState &board, int msToThink)
     int beta = maxEvalScore;
 
     int current_depth = 1;
-
-    std::thread(stopSearchAfterDelay, msToThink).detach();
 
     while (!m_StopSearch)
     {
@@ -355,21 +356,6 @@ Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
             node = node->GetParent();
         }
     }
-
-    // Po zakończeniu: wybierz najczęściej odwiedzany ruch
-
-    // Odwiedziny
-    // MCTS_node *bestChild = nullptr;
-    // int bestVisits = -1;
-    // for (int i = 0; i < root.GetChildrenCount(); ++i)
-    // {
-    //     MCTS_node *child = root.GetChild(i);
-    //     if (child->GetVisitCount() > bestVisits)
-    //     {
-    //         bestVisits = child->GetVisitCount();
-    //         bestChild = child;
-    //     }
-    // }
 
     // Evaluacja
     MCTS_node *bestChild = nullptr;

@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstdlib>
+#include <string>
+#include <sstream>
 
 #include <thread>
 #include <chrono>
@@ -8,63 +10,152 @@
 #include "Eval.h"
 #include "Perft.h"
 
-int main()
+std::string ToAlgebraicNotation(Move move)
 {
-    BoardState chessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    std::string moveNotation;
+    moveNotation.push_back('a' + (move.startingSquere % 8));
+    moveNotation.push_back('1' + (move.startingSquere / 8));
+    moveNotation.push_back('a' + (move.destSquere % 8));
+    moveNotation.push_back('1' + (move.destSquere / 8));
 
-    while (true)
+    switch (move.flag)
     {
-        // #ifdef _WIN32
-        //         int val = system("cls");
-        // #else
-        //         int val = system("clear");
-        // #endif
-
-        chessBoard.DrawBoard();
-
-        if (chessBoard.IsCheckmate())
-        {
-            std::cout << "\nSzach-mat! ";
-            std::cout << (chessBoard.GetFlags().whiteOnMove ? "Czarne" : "Białe") << " wygrały!\n";
-            break;
-        }
-        else if (chessBoard.IsStalemate())
-        {
-            std::cout << "\nPat! Gra zakończona remisem.\n";
-            break;
-        }
-        else if (chessBoard.IsFiftyMoveRule())
-        {
-            std::cout << "\nRemis przez regułę 50 posunięć.\n";
-            break;
-        }
-        else if (chessBoard.IsThreefoldRepetition())
-        {
-            std::cout << "\nRemis przez trzykrotne powtórzenie pozycji.\n";
-            break;
-        }
-        else if (chessBoard.IsInsufficientMaterial())
-        {
-            std::cout << "\nRemis z powodu niewystarczającego materiału.\n";
-            break;
-        }
-
-        std::cout << "\n"
-                  << (chessBoard.GetFlags().whiteOnMove ? "Białe" : "Czarne") << " (Bot) myślą...\n";
-
-        // Move botMove = Eval::FindBestMoveFixedDepth(chessBoard, 5);
-        Move botMove = Eval::FindBestMove(chessBoard, 5000);
-        // Move botMove = Eval::FindBestMove_MCTS(chessBoard, 7000);
-        // char f1 = 'a' + (botMove.startingSquere % 8);
-        // char r1 = '1' + (botMove.startingSquere / 8);
-        // char f2 = 'a' + (botMove.destSquere % 8);
-        // char r2 = '1' + (botMove.destSquere / 8);
-
-        // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "\n";
-
-        chessBoard.MakeMove(botMove);
-        // std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+    case MovesFlags::PromotionQueen:
+        moveNotation += 'q';
+        break;
+    case MovesFlags::PromotionRook:
+        moveNotation += 'r';
+        break;
+    case MovesFlags::PromotionBishop:
+        moveNotation += 'b';
+        break;
+    case MovesFlags::PromotionKnight:
+        moveNotation += 'k';
+        break;
+    default:
+        break;
     }
 
-    return 0;
+    return moveNotation;
+}
+
+int main()
+{
+    std::string line;
+    bool positionIsSet = false;
+    bool engineIsRunning = false;
+    BoardState chessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
+    std::thread engineThread;
+
+    std::size_t posAt;
+    while (std::getline(std::cin, line))
+    {
+        std::stringstream ss(line);
+        std::string token;
+        ss >> token;
+
+        if (token == "uci")
+        {
+            std::cout << "id name CERCI" << std::endl;
+            std::cout << "id author KrzysztofEmerling" << std::endl;
+            std::cout << "uciok" << std::endl;
+        }
+        else if (token == "isready")
+        {
+            std::cout << "readyok" << std::endl;
+        }
+        else if (token == "ucinewgame")
+        {
+            positionIsSet = false;
+        }
+
+        if (!positionIsSet)
+        {
+            if (token == "position")
+            {
+                std::string subtoken;
+                ss >> subtoken;
+                if (subtoken == "startpos")
+                {
+                    positionIsSet = true;
+                }
+                else if (subtoken == "fen")
+                {
+                    std::string fenString, fenPart;
+                    std::getline(ss, fenString);
+                    fenString.erase(0, fenString.find_first_not_of(' '));
+
+                    chessBoard.SetFen(fenString);
+                    positionIsSet = true;
+                }
+            }
+        }
+        else
+        {
+            if (token == "go")
+            {
+                int movetimeMs = -1;
+                int depth = -1;
+
+                std::string param;
+                while (ss >> param)
+                {
+                    if (param == "movetime")
+                    {
+                        ss >> movetimeMs;
+                    }
+                    else if (param == "depth")
+                    {
+                        ss >> depth;
+                    }
+                }
+
+                // jeśli jakiś wątek już działa, dołącz go
+                if (engineThread.joinable())
+                    engineThread.join();
+                engineIsRunning = true;
+
+                if (depth > 0)
+                {
+                    engineThread = std::thread([&, movetimeMs]()
+                                               {
+                        Move bestMove = Eval::FindBestMoveFixedDepth(chessBoard, depth);
+                        std::cout << "bestmove " << ToAlgebraicNotation(bestMove) << std::endl;
+                        engineIsRunning = false; });
+                }
+                else
+                {
+                    engineThread = std::thread([&, movetimeMs]()
+                                               {
+                        Move bestMove = Eval::FindBestMove(chessBoard);
+                        std::cout << "bestmove " << ToAlgebraicNotation(bestMove) << std::endl;
+                        engineIsRunning = false; });
+
+                    if (movetimeMs > 0)
+                    {
+                        std::thread timerThread([&, movetimeMs]()
+                                                {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(movetimeMs));
+                            Eval::StopSearch();
+                            if (engineThread.joinable())
+                                engineThread.join();
+                            engineIsRunning = false; });
+                        timerThread.detach();
+                    }
+                }
+            }
+            else if (token == "stop" && engineIsRunning)
+            {
+                Eval::StopSearch();
+            }
+        }
+
+        if (token == "quit")
+        {
+            if (engineThread.joinable())
+                engineThread.join();
+            break;
+        }
+    }
 }

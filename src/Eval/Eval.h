@@ -8,10 +8,12 @@
 class Eval
 {
 public:
+    static void PrepareForNewGame();
     static Move FindBestMoveFixedDepth(BoardState &board, int depth);
     static Move FindBestMove_MCTS(BoardState &board, int msToThink);
 
-    static Move FindBestMove(BoardState &board, int msToThink);
+    static Move FindBestMove(BoardState &board);
+    static void StopSearch();
 
 private:
     static std::atomic<bool> m_StopSearch;
@@ -22,7 +24,6 @@ private:
     static int quiescenceSearch(BoardState &board, int alpha, int beta, int depth = 0);
 
     static int scoreMove(const BoardState &board, const Move &move);
-    static void stopSearchAfterDelay(int ms);
 
     static constexpr int maxEvalScore = 727379969;
     static constexpr int minEvalScore = -727379969;
