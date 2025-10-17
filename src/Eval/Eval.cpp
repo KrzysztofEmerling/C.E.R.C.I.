@@ -73,9 +73,24 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
 
-    for (size_t i = 0; i < movesList.movesCount; i++)
+    // dodać sortowanie
+
+    std::pair<Move, int> moveScores[218];
+    int count = movesList.movesCount;
+
+    for (int i = 0; i < count; ++i)
     {
-        board.MakeMove(movesList.moves[i]);
+        Move move = movesList.moves[i];
+        moveScores[i] = {move, scoreMove(board, move)};
+    }
+
+    std::sort(moveScores, moveScores + count,
+              [](const auto &a, const auto &b)
+              { return a.second > b.second; });
+
+    for (size_t i = 0; i < count; i++)
+    {
+        board.MakeMove(moveScores[i].first);
         int eval = -alphaBeta(board, depth - 1, -beta, -alpha);
         board.UndoMove();
 
