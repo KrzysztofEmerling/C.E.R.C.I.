@@ -24,4 +24,5 @@ private:
 public:
     void store(u64 hash, int depth, int eval);
     bool probe(u64 hash, int depth, int &eval) const;
+    void Clear();
 };

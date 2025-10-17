@@ -20,6 +20,11 @@ BoardState::BoardState(Flags flags, u64f (&pieces)[13], ZobristHash zHash) : m_F
     }
 }
 
+void BoardState::SetFen(String FENnotation)
+{
+    m_Flags = ParseFEN(FENnotation, m_Pieces);
+}
+
 void BoardState::DrawBoard() const
 {
 

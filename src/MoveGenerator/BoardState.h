@@ -51,6 +51,8 @@ public:
     BoardState(String FENnotation);
     BoardState(Flags flags, u64f (&pieces)[13], ZobristHash zHash);
 
+    void SetFen(String FENnotation);
+
     void DrawBoard() const;
 
     inline u64f GetBB(int pieceType) const noexcept { return m_Pieces[pieceType]; }
