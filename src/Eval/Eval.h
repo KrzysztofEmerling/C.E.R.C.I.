@@ -15,6 +15,8 @@ public:
     static Move FindBestMove(BoardState &board);
     static void StopSearch();
 
+    static int CalculateTimeToSearch(const int moveNr, const int wtime, const int btime, const int winc, const int binc, const bool isWhiteTurn);
+
 private:
     static std::atomic<bool> m_StopSearch;
     inline static TT m_TT;

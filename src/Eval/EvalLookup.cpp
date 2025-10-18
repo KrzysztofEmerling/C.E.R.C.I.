@@ -1,7 +1,7 @@
 #include "Eval.h"
 
 const int Eval::PiecesValues[6] = {
-    120, 300, 350, 500, 900, 2000};
+    90, 320, 370, 500, 900, 2000};
 
 const int Eval::PiecesOpeningPositionTable[6][64] = {
     {0, 0, 0, 0, 0, 0, 0, 0,
