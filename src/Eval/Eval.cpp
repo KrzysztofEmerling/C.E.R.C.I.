@@ -215,6 +215,29 @@ void Eval::StopSearch()
 {
     Eval::m_StopSearch.store(true, std::memory_order_relaxed);
 }
+int Eval::CalculateTimeToSearch(const int moveNr, const int wtime, const int btime, const int winc, const int binc, const bool isWhiteTurn)
+{
+    int temp = 120 - moveNr;
+
+    if (isWhiteTurn)
+    {
+        if (moveNr < 8)
+            return wtime / (3 * temp) + winc;
+        else if (temp > 10)
+            return wtime / temp + winc;
+        else
+            return wtime / 50 + winc;
+    }
+    else
+    {
+        if (moveNr < 8)
+            return btime / (3 * temp) + binc;
+        else if (temp > 10)
+            return btime / temp + binc;
+        else
+            return btime / 50 + binc;
+    }
+}
 
 Move Eval::FindBestMove(BoardState &board)
 {

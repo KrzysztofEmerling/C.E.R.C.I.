@@ -34,6 +34,7 @@ u64 Perft(BoardState &state, int depth)
 
     for (int i = 0; i < movesList.movesCount; i++)
     {
+        nodes = 0ULL;
         Move move = movesList.moves[i];
 
         state.MakeMove(movesList.moves[i]);
