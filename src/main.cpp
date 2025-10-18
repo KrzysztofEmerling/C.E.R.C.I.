@@ -58,7 +58,7 @@ int main()
         if (token == "uci")
         {
             std::cout << "id name CERCI" << std::endl;
-            std::cout << "id author KrzysztofEmerling" << std::endl;
+            std::cout << "id author Krzysztof Emerling" << std::endl;
             std::cout << "uciok" << std::endl;
         }
         else if (token == "isready")
@@ -77,71 +77,94 @@ int main()
             ss >> subtoken;
             if (subtoken == "startpos")
             {
+                chessBoard = BoardState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
                 positionIsSet = true;
-                std::cout << "Wykryto startpos\n";
                 ss >> subtoken;
                 if (subtoken == "moves")
                 {
                     std::string moveToken;
-                    std::cout << "zagrano: ";
                     while (ss >> moveToken)
                     {
                         chessBoard.MakeMove(moveToken.c_str());
-                        std::cout << moveToken << " ";
                     }
-                    std::cout << std::endl;
                 }
             }
             else if (subtoken == "fen")
             {
-                std::string fenString, fenPart;
+                std::string fenString;
                 std::getline(ss, fenString);
                 fenString.erase(0, fenString.find_first_not_of(' '));
 
-                chessBoard.SetFen(fenString);
+                chessBoard = BoardState(fenString.c_str());
+
                 positionIsSet = true;
             }
         }
 
-        if (positionIsSet && token == "go")
+        if (token == "go")
         {
-            int movetimeMs = 4000;
+            if (engineThread.joinable())
+                engineThread.join();
+            int movetimeMs = -1;
             int depth = -1;
 
             std::string param;
             while (ss >> param)
             {
-                if (param == "movetime")
+                if (param == "wtime")
+                {
+                    int wtime = 0, btime = 0, winc = 0, binc = 0;
+                    ss >> wtime;
+                    ss >> param;
+                    ss >> btime;
+
+                    ss >> param;
+                    if (param == "winc")
+                    {
+                        ss >> winc;
+                        ss >> param;
+                        ss >> binc;
+                    }
+                    movetimeMs = Eval::CalculateTimeToSearch(chessBoard.GetMoves(), wtime, btime, winc, binc, chessBoard.IsWhiteMove());
+                }
+                else if (param == "movetime")
                 {
                     ss >> movetimeMs;
+                    break;
                 }
                 else if (param == "depth")
                 {
                     ss >> depth;
+                    engineIsRunning = true;
+
+                    engineThread = std::thread([&]()
+                                               {
+                        Move bestMove = Eval::FindBestMoveFixedDepth(chessBoard, depth);
+                        std::cout << "bestmove " << ToAlgebraicNotation(bestMove) << std::endl;
+                        engineIsRunning = false; });
+                    break;
+                }
+                else if (param == "perft")
+                {
+                    ss >> depth;
+
+                    engineThread = std::thread([&]()
+                                               {
+                        Perft(chessBoard, depth);
+                        engineIsRunning = false; });
+
+                    break;
                 }
             }
 
-            // jeśli jakiś wątek już działa, dołącz go
-            if (engineThread.joinable())
-                engineThread.join();
-            engineIsRunning = true;
-
-            if (depth > 0)
+            if (depth == -1)
             {
-                engineThread = std::thread([&, movetimeMs]()
-                                           {
-                        Move bestMove = Eval::FindBestMoveFixedDepth(chessBoard, depth);
-                        std::cout << "bestmove " << ToAlgebraicNotation(bestMove) << std::endl;
-                        chessBoard.MakeMove(bestMove);
-                        engineIsRunning = false; });
-            }
-            else
-            {
-                engineThread = std::thread([&, movetimeMs]()
+                engineIsRunning = true;
+                engineThread = std::thread([&]()
                                            {
                         Move bestMove = Eval::FindBestMove(chessBoard);
                         std::cout << "bestmove " << ToAlgebraicNotation(bestMove) << std::endl;
-                        chessBoard.MakeMove(bestMove);
                         engineIsRunning = false; });
 
                 if (movetimeMs > 0)
@@ -157,9 +180,14 @@ int main()
                 }
             }
         }
+
         else if (token == "stop" && engineIsRunning)
         {
             Eval::StopSearch();
+        }
+        else if (token == "d")
+        {
+            chessBoard.DrawBoard();
         }
 
         if (token == "quit")
