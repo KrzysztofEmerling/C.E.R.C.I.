@@ -76,17 +76,13 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
 
-    // dodać sortowanie
-
     std::pair<Move, int> moveScores[218];
     int count = movesList.movesCount;
-
     for (int i = 0; i < count; ++i)
     {
         Move move = movesList.moves[i];
         moveScores[i] = {move, scoreMove(board, move)};
     }
-
     std::sort(moveScores, moveScores + count,
               [](const auto &a, const auto &b)
               { return a.second > b.second; });
@@ -130,13 +126,24 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
 
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
-
-    for (size_t i = 0; i < movesList.movesCount; i++)
+    std::pair<Move, int> moveScores[120];
+    int count = movesList.movesCount;
+    int captureCount = 0;
+    for (int i = 0; i < count; ++i)
     {
         if (movesList.moves[i].categorie != Capture)
             continue;
 
-        board.MakeMove(movesList.moves[i]);
+        Move move = movesList.moves[i];
+        moveScores[captureCount++] = {move, scoreMove(board, move)};
+    }
+    std::sort(moveScores, moveScores + captureCount,
+              [](const auto &a, const auto &b)
+              { return a.second > b.second; });
+
+    for (size_t i = 0; i < captureCount; i++)
+    {
+        board.MakeMove(moveScores[i].first);
         int eval = -quiescenceSearch(board, -beta, -alpha, depth - 1);
         board.UndoMove();
 
@@ -214,6 +221,29 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
 void Eval::StopSearch()
 {
     Eval::m_StopSearch.store(true, std::memory_order_relaxed);
+}
+int Eval::CalculateTimeToSearch(const int moveNr, const int wtime, const int btime, const int winc, const int binc, const bool isWhiteTurn)
+{
+    int temp = 120 - moveNr;
+
+    if (isWhiteTurn)
+    {
+        if (moveNr < 7)
+            return wtime / (temp + 30) + winc;
+        else if (temp > 5)
+            return (wtime + 5000) / temp + winc;
+        else
+            return wtime / 50 + winc;
+    }
+    else
+    {
+        if (moveNr < 7)
+            return btime / (temp + 30) + binc;
+        else if (temp > 5)
+            return (btime + 5000) / temp + binc;
+        else
+            return btime / 50 + binc;
+    }
 }
 
 Move Eval::FindBestMove(BoardState &board)
