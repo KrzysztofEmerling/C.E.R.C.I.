@@ -22,7 +22,8 @@ if(BUILD_TESTS)
 
 else()
     message(STATUS "Building application")
-    add_executable(${PROJECT_NAME} src/main.cpp)
+    add_executable(${PROJECT_NAME} src/main.cpp src/UCI.cpp)
+
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

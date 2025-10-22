@@ -1,32 +1,9 @@
 #include <string>
 
-#include "PerftTests.h"
 #include "zHashCalculationTests.h"
 
-int main(int argc, char *argv[])
+int main()
 {
-    bool quickMode = false;
-
-    for (int i = 1; i < argc; ++i)
-    {
-        std::string arg = argv[i];
-        if (arg == "-q")
-        {
-            quickMode = true;
-            break;
-        }
-    }
-
-    if (quickMode)
-    {
-        PerftTests::RunQuickTests();
-        zHashCalculationTests::RunTests();
-    }
-    else
-    {
-        PerftTests::RunLongTests();
-        zHashCalculationTests::RunTests();
-    }
-
+    zHashCalculationTests::RunTests(); // ciężko przerobić ten test na python
     return 0;
 }
