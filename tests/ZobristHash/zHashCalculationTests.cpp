@@ -1,6 +1,6 @@
 #include "zHashCalculationTests.h"
 #include "../PerftTestCase.h"
-#include "../TestUtils.h"
+#include "TestUtils.h"
 #include <stdexcept>
 
 u64 zHashCalculationTests::PerftWithZHashCheck(BoardState &state, int depth)
