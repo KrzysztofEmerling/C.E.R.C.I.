@@ -31,9 +31,20 @@
 *.out
 *.app
 
+#chess bases/formats
+*.pgn
+*.pgn.*
+
+
 .vscode/
 
 build/
 build-test/
+ChessEnv/
+.build*
 
 chess
+
+#python specyfic
+ChessEnv
+__*
