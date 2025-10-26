@@ -22,15 +22,36 @@ def test(engine_path, board1, board2):
     engine = chess.engine.SimpleEngine.popen_uci(engine_path)
     engine_baseline = chess.engine.SimpleEngine.popen_uci(BASELINE_ENGINE)
 
+    desync_white = False
+    desync_black = False
     while not board1.is_game_over():
-        if board1.turn == chess.WHITE:
-            result = engine.play(board1, chess.engine.Limit(time=0.2))
-        else:
-            result = engine_baseline.play(board1, chess.engine.Limit(time=0.2))
+        try:
+
+            if board1.turn == chess.WHITE:
+                result = engine.play(board1, chess.engine.Limit(time=0.2))
+            else:
+                result = engine_baseline.play(board1, chess.engine.Limit(time=0.2))
+        
+        except KeyboardInterrupt:
+            print("\n[!] Test przerwany przez użytkownika (Ctrl+C).")
+            engine.quit()
+            engine_baseline.quit()
+            raise
+        except:
+            desync_white = board1.turn == chess.WHITE
+            desync_black = board1.turn == chess.BLACK
+            break
 
         board1.push(result.move)
-        # print(board)
-        # print()
+
+
+    if(desync_black):
+        result1 = "1-0"
+    elif(desync_white):
+        result1 = "0-1"
+    else:
+        result1 = board1.result()
+
     engine.quit()
     engine_baseline.quit()
 
@@ -38,24 +59,41 @@ def test(engine_path, board1, board2):
     engine = chess.engine.SimpleEngine.popen_uci(engine_path)
     engine_baseline = chess.engine.SimpleEngine.popen_uci(BASELINE_ENGINE)
 
-    while not board2.is_game_over():
-        if board2.turn == chess.BLACK:
-            result = engine.play(board2, chess.engine.Limit(time=0.2))
-        else:
-            result = engine_baseline.play(board2, chess.engine.Limit(time=0.2))
+    desync_white = False
+    desync_black = False
+    while not board1.is_game_over():
+        try:
+            if board1.turn == chess.WHITE:
+                result = engine.play(board1, chess.engine.Limit(time=0.2))
+            else:
+                result = engine_baseline.play(board1, chess.engine.Limit(time=0.2))
+        except KeyboardInterrupt:
+            print("\n[!] Test przerwany przez użytkownika (Ctrl+C).")
+            engine.quit()
+            engine_baseline.quit()
+            raise
+        except:
+            desync_white = board1.turn == chess.WHITE
+            desync_black = board1.turn == chess.BLACK
+            break
 
-        board2.push(result.move)
-        # print(board)
-        # print()
-    engine.quit()
-    engine_baseline.quit()
-    return board1.result(), board2.result()
+        board1.push(result.move)
+
+
+    if(desync_black):
+        result2 = "1-0"
+    elif(desync_white):
+        result2 = "0-1"
+    else:
+        result2 = board1.result()
+
+    return result1, result2
 
 def run_improvement_tests(engine_path):
 
     report_lines = []
     report_lines.append("-" * 80)
-    report_lines.append("Typical Endings Test")
+    report_lines.append("Improvements Test")
     report_lines.append("-" * 80)
 
     win_as_white = 0
@@ -64,14 +102,10 @@ def run_improvement_tests(engine_path):
     all_games = 0
 
     start = time.time()
-    for position in positions:
-        moves = position.split()[3:]
-        board1 = chess.Board()
-        board2 = chess.Board()
-        for move in moves:
-            board1.push_uci(move)
-            board2.push_uci(move)
-        report_lines.append(f"FEN: {board1.fen()}")
+    for fen in positions:
+        board1 = chess.Board(fen)
+        board2 = chess.Board(fen)
+        report_lines.append(f"FEN: {fen}")
 
         wresult, bresult = test(engine_path, board1, board2)
         line = f"Playing White: {wresult} Playing Black: {bresult}"
@@ -93,7 +127,7 @@ def run_improvement_tests(engine_path):
     report_lines.append(f"Total time: {format_time(end - start)}")
     report_lines.append(f"Win as White: {win_as_white}, Win as Black: {win_as_black}, Draws: {draw}")
 
-    loses = all_games - (win_as_white + win_as_black)
+    loses = all_games - (win_as_white + win_as_black + draw)
     report_lines.append(f"Total win count: {win_as_white + win_as_black}, Draws: {draw}, Total loses: {loses}")
     report_lines.append("-" * 80)
     report = "\n".join(report_lines)

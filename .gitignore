@@ -34,7 +34,7 @@
 #chess bases/formats
 *.pgn
 *.pgn.*
-
+*.jsonl*
 
 .vscode/
 
@@ -42,6 +42,7 @@ build/
 build-test/
 ChessEnv/
 .build*
+.engines
 
 chess
 
