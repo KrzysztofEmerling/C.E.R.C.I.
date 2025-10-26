@@ -17,7 +17,6 @@ int Eval::staticEval(const BoardState &board)
     const u64f *pieces = board.GetBBs();
     int eval = 0;
     int allPiecesCount = 0;
-
     for (int i = 0; i < 5; i++)
     {
         int wCount = std::popcount(pieces[i]);
@@ -26,6 +25,8 @@ int Eval::staticEval(const BoardState &board)
         allPiecesCount += wCount + bCount;
         eval += (wCount - bCount) * PiecesValues[i];
     }
+    bool whiteMaterialAdventage = eval > 0;
+
     if (allPiecesCount > 32)
         allPiecesCount = 32;
     int isEndGame = ((32 - allPiecesCount) * 1024) / 32;
@@ -54,24 +55,59 @@ int Eval::staticEval(const BoardState &board)
     }
     eval += activityScore;
 
-    return board.IsWhiteMove()
-               ? eval + EQ_BAIAS
-               : -eval + EQ_BAIAS;
+    int wKingIndex = __builtin_ctzll(pieces[5]);
+    int bKingIndex = __builtin_ctzll(pieces[11]);
+
+    int wKingX = wKingIndex % 8;
+    int wKingY = wKingIndex / 8;
+    int bKingX = bKingIndex % 8;
+    int bKingY = bKingIndex / 8;
+
+    int distFromKing = abs(wKingX - bKingX) + abs(wKingY - bKingY);
+    if (board.IsWhiteMove())
+    {
+        if (allPiecesCount < 7)
+        {
+            int distToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
+
+            int matingWeight = (14 - distFromKing) * 50 + distToCenter * 70;
+
+            whiteMaterialAdventage ? eval += matingWeight : eval -= matingWeight;
+        }
+
+        return eval;
+    }
+    else
+    {
+        if (allPiecesCount < 7)
+        {
+            int distToCenter = std::max(3 - wKingX, wKingX - 4) + std::max(3 - wKingY, wKingY - 4);
+
+            int matingWeight = (14 - distFromKing) * 50 + distToCenter * 70;
+
+            (!whiteMaterialAdventage) ? eval += matingWeight : eval -= matingWeight;
+        }
+        return -eval;
+    }
 }
 
 int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
 {
-    if (board.IsFiftyMoveRule() || board.IsInsufficientMaterial() || board.IsStalemate() || board.IsThreefoldRepetition())
+    // if (board.IsFiftyMoveRule() || board.IsInsufficientMaterial() || board.IsStalemate() || board.IsThreefoldRepetition())
+    if (board.IsFiftyMoveRule() || board.IsStalemate() || board.IsInsufficientMaterial())
         return 0;
-    if (board.IsCheckmate())
+    else if (board.IsCheckmate())
         return -matScore - depth;
 
-    if (depth == 0)
+    else if (depth == 0)
         return quiescenceSearch(board, alpha, beta);
 
     int bestEval = minEvalScore;
     if (m_TT.probe(board.GetHash(), depth, bestEval))
         return bestEval;
+
+    if (m_StopSearch) // szybkie  wyjście z przeszukiwania
+        return 0;
 
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
@@ -92,6 +128,9 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
         board.MakeMove(moveScores[i].first);
         int eval = -alphaBeta(board, depth - 1, -beta, -alpha);
         board.UndoMove();
+
+        if (m_StopSearch) // szybkie  wyjście z przeszukiwania
+            return 0;
 
         if (eval > bestEval)
             bestEval = eval;
@@ -120,9 +159,9 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
     if (qEval > alpha)
         alpha = qEval;
 
-    // zabezpieczenie przed eksplozją głębokości
-    if (depth <= -8)
-        return alpha;
+    // zabezpieczenie przed eksplozją głębokości i szybsze wyjście
+    if (depth <= -8 || m_StopSearch)
+        return beta;
 
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
@@ -268,25 +307,26 @@ Move Eval::FindBestMove(BoardState &board)
               { return a.second > b.second; });
 
     Move bestMove = moveScores[0].first;
+
+    Move pBestMove = bestMove;
     int bestEval = minEvalScore;
     int alpha = minEvalScore;
     int beta = maxEvalScore;
 
     int current_depth = 1;
-
     while (!m_StopSearch)
     {
         for (int i = 0; i < count; ++i)
         {
-            if (m_StopSearch)
-                break;
-
             const Move &move = moveScores[i].first;
             board.MakeMove(move);
             int eval = -alphaBeta(board, current_depth - 1, -beta, -alpha);
             moveScores[i].second = eval;
 
             board.UndoMove();
+
+            if (m_StopSearch)
+                break;
 
             if (eval > bestEval)
             {
@@ -300,6 +340,10 @@ Move Eval::FindBestMove(BoardState &board)
             if (alpha >= beta)
                 break;
         }
+        pBestMove = bestMove;
+
+        if (m_StopSearch)
+            break;
 
         std::sort(moveScores, moveScores + count,
                   [](const auto &a, const auto &b)
@@ -307,7 +351,7 @@ Move Eval::FindBestMove(BoardState &board)
         ++current_depth;
     }
 
-    return bestMove;
+    return pBestMove;
 }
 
 Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
