@@ -151,18 +151,19 @@ void UniversalChessInterface::handleSherch(std::stringstream &ss)
             ss >> depth;
             engineIsSherching = true;
 
-            engineThread = std::thread([&]()
+            engineThread = std::thread([this, depth]()
                                        {
-                        Move bestMove = Eval::FindBestMoveFixedDepth(chessBoard, depth);
-                        std::cout << "bestmove " << toAlgebraicNotation(bestMove) << std::endl;
-                        engineIsSherching = false; });
+            Move bestMove = Eval::FindBestMoveFixedDepth(chessBoard, depth);
+            std::cout << "bestmove " << toAlgebraicNotation(bestMove) << std::endl;
+            engineIsSherching = false; });
+
             break;
         }
         else if (param == "perft")
         {
             ss >> depth;
 
-            engineThread = std::thread([&]()
+            engineThread = std::thread([this, depth]()
                                        {
                         Perft(chessBoard, depth);
                         engineIsSherching = false; });
