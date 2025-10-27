@@ -61,23 +61,23 @@ def test(engine_path, board1, board2):
 
     desync_white = False
     desync_black = False
-    while not board1.is_game_over():
+    while not board2.is_game_over():
         try:
-            if board1.turn == chess.WHITE:
-                result = engine.play(board1, chess.engine.Limit(time=0.2))
+            if board2.turn == chess.WHITE:
+                result = engine_baseline.play(board2, chess.engine.Limit(time=0.2))
             else:
-                result = engine_baseline.play(board1, chess.engine.Limit(time=0.2))
+                result = engine.play(board2, chess.engine.Limit(time=0.2))
         except KeyboardInterrupt:
-            print("\n[!] Test przerwany przez użytkownika (Ctrl+C).")
+            print("\n[!] Test przerwany przez użytkownika.")
             engine.quit()
             engine_baseline.quit()
             raise
         except:
-            desync_white = board1.turn == chess.WHITE
-            desync_black = board1.turn == chess.BLACK
+            desync_white = board2.turn == chess.WHITE
+            desync_black = board2.turn == chess.BLACK
             break
 
-        board1.push(result.move)
+        board2.push(result.move)
 
 
     if(desync_black):
@@ -85,7 +85,7 @@ def test(engine_path, board1, board2):
     elif(desync_white):
         result2 = "0-1"
     else:
-        result2 = board1.result()
+        result2 = board2.result()
 
     return result1, result2
 
@@ -111,12 +111,12 @@ def run_improvement_tests(engine_path):
         line = f"Playing White: {wresult} Playing Black: {bresult}"
         if(wresult == "1-0"):
             win_as_white += 1
-        elif(wresult != "0-1"):
+        else:
             draw += 1
 
         if(bresult == "0-1"):
             win_as_black += 1
-        elif(bresult != "1-0"):
+        else:
             draw += 1
         
         all_games += 2

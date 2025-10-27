@@ -42,7 +42,7 @@ int Eval::staticEval(const BoardState &board)
         {
             int index = __builtin_ctzll(wPiece);
             wPiece &= wPiece - 1;
-            activityScore += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 2048;
+            activityScore += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 1024;
         }
         // Czarne
         while (bPiece)
@@ -50,13 +50,45 @@ int Eval::staticEval(const BoardState &board)
             int index = __builtin_ctzll(bPiece);
             bPiece &= bPiece - 1;
             int mirroredIndex = index ^ 56;
-            activityScore -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][mirroredIndex] + isEndGame * PiecesEndgamePositionTable[i][mirroredIndex]) / 2048;
+            activityScore -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][mirroredIndex] + isEndGame * PiecesEndgamePositionTable[i][mirroredIndex]) / 1024;
         }
     }
     eval += activityScore;
 
-    int wKingIndex = __builtin_ctzll(pieces[5]);
-    int bKingIndex = __builtin_ctzll(pieces[11]);
+    // Ading positional playstyle
+    u64f wKingBB = pieces[5];
+    u64f bKingBB = pieces[11];
+
+    u64 blockingPawns = pieces[6] | pieces[0];
+    u64 notBlockers = ~blockingPawns;
+
+    u64 kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(bKingBB);
+
+    u64 lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
+    lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], blockingPawns) & notBlockers;
+    u64 heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], blockingPawns) & notBlockers;
+    heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], blockingPawns) & notBlockers;
+
+    int lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
+    int heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
+    eval += lightAttackers * 15 + heavyAttackers * 20;
+
+    // czarne
+    kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(wKingBB);
+
+    lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
+    lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], blockingPawns) & notBlockers;
+    heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], blockingPawns) & notBlockers;
+    heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], blockingPawns) & notBlockers;
+
+    lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
+    heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
+    eval -= lightAttackers * 30 + heavyAttackers * 50;
+
+    // end
+
+    int wKingIndex = __builtin_ctzll(wKingBB);
+    int bKingIndex = __builtin_ctzll(bKingBB);
 
     int wKingX = wKingIndex % 8;
     int wKingY = wKingIndex / 8;
@@ -70,7 +102,7 @@ int Eval::staticEval(const BoardState &board)
         {
             int distToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
 
-            int matingWeight = (14 - distFromKing) * 50 + distToCenter * 70;
+            int matingWeight = (14 - distFromKing) * 80 + distToCenter * 100;
 
             whiteMaterialAdventage ? eval += matingWeight : eval -= matingWeight;
         }
@@ -83,7 +115,7 @@ int Eval::staticEval(const BoardState &board)
         {
             int distToCenter = std::max(3 - wKingX, wKingX - 4) + std::max(3 - wKingY, wKingY - 4);
 
-            int matingWeight = (14 - distFromKing) * 50 + distToCenter * 70;
+            int matingWeight = (14 - distFromKing) * 80 + distToCenter * 100;
 
             (!whiteMaterialAdventage) ? eval += matingWeight : eval -= matingWeight;
         }
@@ -93,20 +125,21 @@ int Eval::staticEval(const BoardState &board)
 
 int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
 {
+
+    int bestEval = minEvalScore;
     // if (board.IsFiftyMoveRule() || board.IsInsufficientMaterial() || board.IsStalemate() || board.IsThreefoldRepetition())
     if (board.IsFiftyMoveRule() || board.IsStalemate() || board.IsInsufficientMaterial())
         return 0;
     else if (board.IsCheckmate())
         return -matScore - depth;
 
-    else if (depth == 0)
-        return quiescenceSearch(board, alpha, beta);
-
-    int bestEval = minEvalScore;
-    if (m_TT.probe(board.GetHash(), depth, bestEval))
+    else if (m_TT.probe(board.GetHash(), depth, bestEval))
         return bestEval;
 
-    if (m_StopSearch) // szybkie  wyjście z przeszukiwania
+    else if (depth == 0)
+        return quiescenceSearch(board, -beta, -alpha, depth - 1);
+
+    else if (m_StopSearch) // szybkie  wyjście z przeszukiwania
         return 0;
 
     MoveList movesList;
@@ -142,6 +175,8 @@ int Eval::alphaBeta(BoardState &board, int depth, int alpha, int beta)
             break;
     }
 
+    if (m_StopSearch) // szybkie bez zapisywania błędnych wyników
+        return 0;
     m_TT.store(board.GetHash(), depth, bestEval);
     return bestEval;
 }
@@ -150,7 +185,7 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
     if (board.IsCheckmate())
         return -matScore - depth;
 
-    if (m_TT.probe(board.GetHash(), depth, alpha))
+    else if (m_TT.probe(board.GetHash(), depth, alpha))
         return alpha;
 
     int qEval = staticEval(board);
@@ -159,9 +194,10 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
     if (qEval > alpha)
         alpha = qEval;
 
-    // zabezpieczenie przed eksplozją głębokości i szybsze wyjście
-    if (depth <= -8 || m_StopSearch)
-        return beta;
+    if (m_StopSearch)
+    {
+        return 0;
+    }
 
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
@@ -190,8 +226,12 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth)
             return beta;
         if (eval > alpha)
             alpha = eval;
-    }
 
+        if (m_StopSearch)
+            return 0;
+    }
+    if (m_StopSearch)
+        return 0;
     m_TT.store(board.GetHash(), depth, alpha);
     return alpha;
 }
@@ -231,6 +271,12 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
         int eval = -alphaBeta(board, depth - 1, -beta, -alpha);
         board.UndoMove();
 
+        // char f1 = 'a' + (move.startingSquere % 8);
+        // char r1 = '1' + (move.startingSquere / 8);
+        // char f2 = 'a' + (move.destSquere % 8);
+        // char r2 = '1' + (move.destSquere / 8);
+        // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
+
         if (eval > bestEval)
         {
             bestEval = eval;
@@ -242,18 +288,7 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
 
         if (alpha >= beta)
             break;
-
-        // char f1 = 'a' + (bestMove.startingSquere % 8);
-        // char r1 = '1' + (bestMove.startingSquere / 8);
-        // char f2 = 'a' + (bestMove.destSquere % 8);
-        // char r2 = '1' + (bestMove.destSquere / 8);
-        // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << bestEval << "\n";
     }
-    // char f1 = 'a' + (bestMove.startingSquere % 8);
-    // char r1 = '1' + (bestMove.startingSquere / 8);
-    // char f2 = 'a' + (bestMove.destSquere % 8);
-    // char r2 = '1' + (bestMove.destSquere / 8);
-    // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << bestEval << "\n";
     return bestMove;
 }
 
@@ -307,8 +342,6 @@ Move Eval::FindBestMove(BoardState &board)
               { return a.second > b.second; });
 
     Move bestMove = moveScores[0].first;
-
-    Move pBestMove = bestMove;
     int bestEval = minEvalScore;
     int alpha = minEvalScore;
     int beta = maxEvalScore;
@@ -339,8 +372,13 @@ Move Eval::FindBestMove(BoardState &board)
 
             if (alpha >= beta)
                 break;
+
+            // char f1 = 'a' + (move.startingSquere % 8);
+            // char r1 = '1' + (move.startingSquere / 8);
+            // char f2 = 'a' + (move.destSquere % 8);
+            // char r2 = '1' + (move.destSquere / 8);
+            // std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
         }
-        pBestMove = bestMove;
 
         if (m_StopSearch)
             break;
@@ -351,7 +389,7 @@ Move Eval::FindBestMove(BoardState &board)
         ++current_depth;
     }
 
-    return pBestMove;
+    return bestMove;
 }
 
 Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
@@ -444,12 +482,12 @@ Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
         }
     }
     Move move = bestChild->GetMove();
-    char f1 = 'a' + (move.startingSquere % 8);
-    char r1 = '1' + (move.startingSquere / 8);
-    char f2 = 'a' + (move.destSquere % 8);
-    char r2 = '1' + (move.destSquere / 8);
+    // char f1 = 'a' + (move.startingSquere % 8);
+    // char r1 = '1' + (move.startingSquere / 8);
+    // char f2 = 'a' + (move.destSquere % 8);
+    // char r2 = '1' + (move.destSquere / 8);
 
-    std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "BestEval: " << bestEval << "\n";
+    // std::cout << "Ruch: " << f1 << r1 << f2 << r2 << "BestEval: " << bestEval << "\n";
     return move;
 }
 
