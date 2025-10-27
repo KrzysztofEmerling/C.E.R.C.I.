@@ -6,6 +6,8 @@
 
 class MoveGenerator
 {
+    friend class Eval;
+
 public:
     static void GetLegalMoves(const BoardState &state, MoveList &moves);
 
