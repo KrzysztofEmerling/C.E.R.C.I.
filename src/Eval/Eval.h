@@ -30,6 +30,15 @@ private:
     static constexpr int maxEvalScore = 727379969;
     static constexpr int minEvalScore = -727379969;
     static constexpr int matScore = 5000000;
+    static constexpr u64 FILE_MASKS[8] = {
+        0x0101010101010101ULL,
+        0x0202020202020202ULL,
+        0x0404040404040404ULL,
+        0x0808080808080808ULL,
+        0x1010101010101010ULL,
+        0x2020202020202020ULL,
+        0x4040404040404040ULL,
+        0x8080808080808080ULL};
 
     static const int PiecesOpeningPositionTable[6][64];
     static const int PiecesEndgamePositionTable[6][64];
