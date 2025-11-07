@@ -87,68 +87,68 @@ int Eval::staticEval(const BoardState &board)
 
     // Adding Positional playstyle
     // white
-    if (allPiecesCount < 31)
-    {
-        u64 allBlockers = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[6] | pieces[7] | pieces[8] | pieces[9] | pieces[10];
-        u64 notBlockers = ~allBlockers;
+    // if (allPiecesCount < 31)
+    // {
+    //     u64 allBlockers = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[6] | pieces[7] | pieces[8] | pieces[9] | pieces[10];
+    //     u64 notBlockers = ~allBlockers;
 
-        u64 wPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[0]);
-        u64 wLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
-        wLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], allBlockers) & notBlockers;
-        u64 wHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], allBlockers) & notBlockers;
-        wHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], allBlockers) & notBlockers;
+    //     u64 wPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[0]);
+    //     u64 wLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
+    //     wLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], allBlockers) & notBlockers;
+    //     u64 wHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], allBlockers) & notBlockers;
+    //     wHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], allBlockers) & notBlockers;
 
-        u64 bPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[6]);
-        u64 bLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
-        bLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], allBlockers) & notBlockers;
-        u64 bHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], allBlockers) & notBlockers;
-        bHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], allBlockers) & notBlockers;
+    //     u64 bPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[6]);
+    //     u64 bLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
+    //     bLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], allBlockers) & notBlockers;
+    //     u64 bHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], allBlockers) & notBlockers;
+    //     bHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], allBlockers) & notBlockers;
 
-        int whiteHeavyControlled = std::popcount(wHeavyAttackedSquers & (~(bLightAttackedSquers | bPawnControled)));
-        int whiteLightControlled = std::popcount(wLightAttackedSquers & (~(bPawnControled)));
+    //     int whiteHeavyControlled = std::popcount(wHeavyAttackedSquers & (~(bLightAttackedSquers | bPawnControled)));
+    //     int whiteLightControlled = std::popcount(wLightAttackedSquers & (~(bPawnControled)));
 
-        int blackHeavyControlled = std::popcount(bHeavyAttackedSquers & (~(wLightAttackedSquers | wPawnControled)));
-        int blackLightControlled = std::popcount(bLightAttackedSquers & (~(wPawnControled)));
+    //     int blackHeavyControlled = std::popcount(bHeavyAttackedSquers & (~(wLightAttackedSquers | wPawnControled)));
+    //     int blackLightControlled = std::popcount(bLightAttackedSquers & (~(wPawnControled)));
 
-        int wActivityBonus = 6 * whiteHeavyControlled + 12 * whiteLightControlled;
-        if (wActivityBonus > 350)
-            wActivityBonus = 350;
+    //     int wActivityBonus = 6 * whiteHeavyControlled + 12 * whiteLightControlled;
+    //     if (wActivityBonus > 350)
+    //         wActivityBonus = 350;
 
-        int bActivityBonus = 6 * blackHeavyControlled + 12 * blackLightControlled;
-        if (bActivityBonus > 350)
-            bActivityBonus = 350;
+    //     int bActivityBonus = 6 * blackHeavyControlled + 12 * blackLightControlled;
+    //     if (bActivityBonus > 350)
+    //         bActivityBonus = 350;
 
-        eval += wActivityBonus;
-        eval -= bActivityBonus;
-    }
-    // zdublowane piony
-    u64f wPawns = pieces[0];
-    u64f bPawns = pieces[6];
-    for (int i = 0; i < 8; i++)
-    {
-        if (std::popcount(wPawns & FILE_MASKS[i]) > 1)
-            eval -= 5;
-        if (std::popcount(bPawns & FILE_MASKS[i]) > 1)
-            eval += 5;
-    }
-    while (wPawns > 0ULL)
-    {
-        int square = __builtin_ctzll(wPawns);
-        wPawns &= wPawns - 1;
+    //     eval += wActivityBonus;
+    //     eval -= bActivityBonus;
+    // }
+    // // zdublowane piony
+    // u64f wPawns = pieces[0];
+    // u64f bPawns = pieces[6];
+    // for (int i = 0; i < 8; i++)
+    // {
+    //     if (std::popcount(wPawns & FILE_MASKS[i]) > 1)
+    //         eval -= 5;
+    //     if (std::popcount(bPawns & FILE_MASKS[i]) > 1)
+    //         eval += 5;
+    // }
+    // while (wPawns > 0ULL)
+    // {
+    //     int square = __builtin_ctzll(wPawns);
+    //     wPawns &= wPawns - 1;
 
-        if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[0]) > 1)
-            eval++;
-    }
-    while (bPawns > 0ULL)
-    {
-        int square = __builtin_ctzll(wPawns);
-        bPawns &= bPawns - 1;
+    //     if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[0]) > 1)
+    //         eval++;
+    // }
+    // while (bPawns > 0ULL)
+    // {
+    //     int square = __builtin_ctzll(wPawns);
+    //     bPawns &= bPawns - 1;
 
-        if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[6]) > 1)
-            eval--;
-    }
-    // end
-
+    //     if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[6]) > 1)
+    //         eval--;
+    // }
+    // // end
+    eval = 0;
     int wKingIndex = __builtin_ctzll(wKingBB);
     int bKingIndex = __builtin_ctzll(bKingBB);
 
@@ -157,16 +157,25 @@ int Eval::staticEval(const BoardState &board)
     int bKingX = bKingIndex % 8;
     int bKingY = bKingIndex / 8;
 
+    // int matingWeight = (14 - distFromKing) * 80 + distToCenter * 100;
+
+    // whiteMaterialAdventage ? eval += matingWeight : eval -= matingWeight;
     int distFromKing = abs(wKingX - bKingX) + abs(wKingY - bKingY);
+    int wDistToCenter = std::max(3 - wKingX, wKingX - 4) + std::max(3 - wKingY, wKingY - 4);
+    int bDistToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
+
     if (board.IsWhiteMove())
     {
         if (allPiecesCount < 7)
         {
-            int distToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
-
-            int matingWeight = (14 - distFromKing) * 80 + distToCenter * 100;
-
-            whiteMaterialAdventage ? eval += matingWeight : eval -= matingWeight;
+            if (whiteMaterialAdventage)
+            {
+                eval += 80 * (14 - distFromKing) + 100 * bDistToCenter;
+            }
+            else
+            {
+                eval -= 30 * (14 - distFromKing) + 100 * wDistToCenter;
+            }
         }
 
         return eval;
@@ -175,12 +184,16 @@ int Eval::staticEval(const BoardState &board)
     {
         if (allPiecesCount < 7)
         {
-            int distToCenter = std::max(3 - wKingX, wKingX - 4) + std::max(3 - wKingY, wKingY - 4);
-
-            int matingWeight = (14 - distFromKing) * 80 + distToCenter * 100;
-
-            (!whiteMaterialAdventage) ? eval += matingWeight : eval -= matingWeight;
+            if (!whiteMaterialAdventage)
+            {
+                eval += 80 * (14 - distFromKing) + 100 * wDistToCenter;
+            }
+            else
+            {
+                eval -= 30 * (14 - distFromKing) + 100 * bDistToCenter;
+            }
         }
+
         return -eval;
     }
 }
@@ -435,11 +448,11 @@ Move Eval::FindBestMove(BoardState &board)
             if (alpha >= beta)
                 break;
 
-            // char f1 = 'a' + (move.startingSquere % 8);
-            // char r1 = '1' + (move.startingSquere / 8);
-            // char f2 = 'a' + (move.destSquere % 8);
-            // char r2 = '1' + (move.destSquere / 8);
-            // std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
+            char f1 = 'a' + (move.startingSquere % 8);
+            char r1 = '1' + (move.startingSquere / 8);
+            char f2 = 'a' + (move.destSquere % 8);
+            char r2 = '1' + (move.destSquere / 8);
+            std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
         }
 
         if (m_StopSearch)
