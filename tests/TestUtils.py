@@ -1,7 +1,7 @@
 import subprocess
 
 RFERENCE_ENGINE = "/usr/games/stockfish"
-BASELINE_ENGINE = "./.engines/CERCI-Baseline-EvalFix"
+BASELINE_ENGINE = "./.engines/CERCI-Baseline-EvalFix-v2"
 
 def format_time(seconds):
     hours = int(seconds // 3600)
