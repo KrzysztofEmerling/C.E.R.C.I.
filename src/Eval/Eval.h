@@ -22,8 +22,9 @@ private:
     inline static TT m_TT;
 
     static int staticEval(const BoardState &board);
-    static int alphaBeta(BoardState &board, int depth, int alpha, int beta);
-    static int quiescenceSearch(BoardState &board, int alpha, int beta, int depth = 0);
+
+    static int alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_depth = 1);
+    static int quiescenceSearch(BoardState &board, int alpha, int beta, int depth, int ref_depth);
 
     static int scoreMove(const BoardState &board, const Move &move);
 
@@ -42,6 +43,5 @@ private:
 
     static const int PiecesOpeningPositionTable[6][64];
     static const int PiecesEndgamePositionTable[6][64];
-
     static const int PiecesValues[6];
 };
