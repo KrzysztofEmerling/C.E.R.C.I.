@@ -43,8 +43,8 @@ private:
     uint16_t m_SnapshotsCount;
 
     const char *m_UnicodePieces[13] = {
-        "♙", "♘", "♗", "♖", "♕", "♔", // Białe
-        "♟", "♞", "♝", "♜", "♛", "♚", // Czarne
+        "♟", "♞", "♝", "♜", "♛", "♚", // Białe
+        "♙", "♘", "♗", "♖", "♕", "♔", // Czarne
         "."};
 
 public:
