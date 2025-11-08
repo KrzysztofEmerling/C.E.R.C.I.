@@ -28,8 +28,8 @@ private:
 
     static int scoreMove(const BoardState &board, const Move &move);
 
-    static constexpr int maxEvalScore = 727379969;
-    static constexpr int minEvalScore = -727379969;
+    static constexpr int maxEvalScore = 25000010;
+    static constexpr int minEvalScore = -25000010;
     static constexpr int matScore = 5000000;
     static constexpr u64 FILE_MASKS[8] = {
         0x0101010101010101ULL,
