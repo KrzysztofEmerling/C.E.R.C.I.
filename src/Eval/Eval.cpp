@@ -42,7 +42,7 @@ int Eval::staticEval(const BoardState &board)
         {
             int index = __builtin_ctzll(wPiece);
             wPiece &= wPiece - 1;
-            activityScore += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 2048;
+            activityScore += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 1536;
         }
         // Czarne
         while (bPiece)
@@ -50,7 +50,7 @@ int Eval::staticEval(const BoardState &board)
             int index = __builtin_ctzll(bPiece);
             bPiece &= bPiece - 1;
             int mirroredIndex = index ^ 56;
-            activityScore -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][mirroredIndex] + isEndGame * PiecesEndgamePositionTable[i][mirroredIndex]) / 2048;
+            activityScore -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][mirroredIndex] + isEndGame * PiecesEndgamePositionTable[i][mirroredIndex]) / 1536;
         }
     }
     eval += activityScore;
@@ -156,45 +156,20 @@ int Eval::staticEval(const BoardState &board)
     int bKingX = bKingIndex % 8;
     int bKingY = bKingIndex / 8;
 
-    // int matingWeight = (14 - distFromKing) * 80 + distToCenter * 100;
+    if (allPiecesCount < 7)
+    {
+        int distFromKing = abs(wKingX - bKingX) + abs(wKingY - bKingY);
+        int wDistToCenter = std::max(3 - wKingX, wKingX - 4) + std::max(3 - wKingY, wKingY - 4);
+        int bDistToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
 
-    // whiteMaterialAdventage ? eval += matingWeight : eval -= matingWeight;
-    int distFromKing = abs(wKingX - bKingX) + abs(wKingY - bKingY);
-    int wDistToCenter = std::max(3 - wKingX, wKingX - 4) + std::max(3 - wKingY, wKingY - 4);
-    int bDistToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
+        whiteMaterialAdventage ? eval += 15 * (14 - distFromKing) : eval -= 15 * (14 - distFromKing);
+        eval += 25 * bDistToCenter - 25 * wDistToCenter;
+    }
 
     if (board.IsWhiteMove())
-    {
-        if (allPiecesCount < 7)
-        {
-            if (whiteMaterialAdventage)
-            {
-                eval += 80 * (14 - distFromKing) + 100 * bDistToCenter;
-            }
-            else
-            {
-                eval -= 30 * (14 - distFromKing) + 100 * wDistToCenter;
-            }
-        }
-
         return eval;
-    }
     else
-    {
-        if (allPiecesCount < 7)
-        {
-            if (!whiteMaterialAdventage)
-            {
-                eval += 80 * (14 - distFromKing) + 100 * wDistToCenter;
-            }
-            else
-            {
-                eval -= 30 * (14 - distFromKing) + 100 * bDistToCenter;
-            }
-        }
-
         return -eval;
-    }
 }
 
 int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_depth)
@@ -204,13 +179,12 @@ int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_d
     else if (board.IsCheckmate())
         return -(matScore - (1 + (ref_depth - depth)));
 
-    else if (m_TT.probe(board.GetHash(), ref_depth, alpha))
-        return alpha;
+    // else if (m_TT.probe(board.GetHash(), ref_depth, alpha))
+    //     return alpha;
 
     else if (depth == 0)
     {
         return quiescenceSearch(board, alpha, beta, depth, ref_depth);
-        // eval = -staticEval(board);
     }
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
@@ -236,7 +210,7 @@ int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_d
     if (m_StopSearch) // szybkie bez zapisywania błędnych wyników
         return 0;
 
-    m_TT.store(board.GetHash(), ref_depth, alpha);
+    // m_TT.store(board.GetHash(), ref_depth, alpha);
     return alpha;
 }
 int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, int ref_depth)
@@ -246,8 +220,8 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, in
     else if (board.IsCheckmate())
         return -(matScore - (1 + (ref_depth - depth)));
 
-    else if (m_TT.probe(board.GetHash(), ref_depth, alpha))
-        return alpha;
+    // else if (m_TT.probe(board.GetHash(), ref_depth, alpha))
+    //     return alpha;
 
     int standPat = staticEval(board);
     if (standPat > alpha)
@@ -288,7 +262,7 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, in
     if (m_StopSearch)
         return 0;
 
-    m_TT.store(board.GetHash(), ref_depth, alpha);
+    // m_TT.store(board.GetHash(), ref_depth, alpha);
     return alpha;
 }
 
