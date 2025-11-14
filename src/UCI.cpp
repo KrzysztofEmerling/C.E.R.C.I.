@@ -149,6 +149,8 @@ void UniversalChessInterface::handleSherch(std::stringstream &ss)
         else if (param == "depth")
         {
             ss >> depth;
+            // std::cout << "Depth selected: " << depth << std::endl;
+
             engineIsSherching = true;
 
             engineThread = std::thread([this, depth]()

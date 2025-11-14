@@ -22,13 +22,14 @@ private:
     inline static TT m_TT;
 
     static int staticEval(const BoardState &board);
-    static int alphaBeta(BoardState &board, int depth, int alpha, int beta);
-    static int quiescenceSearch(BoardState &board, int alpha, int beta, int depth = 0);
+
+    static int alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_depth = 1);
+    static int quiescenceSearch(BoardState &board, int alpha, int beta, int depth, int ref_depth);
 
     static int scoreMove(const BoardState &board, const Move &move);
 
-    static constexpr int maxEvalScore = 727379969;
-    static constexpr int minEvalScore = -727379969;
+    static constexpr int maxEvalScore = 25000010;
+    static constexpr int minEvalScore = -25000010;
     static constexpr int matScore = 5000000;
     static constexpr u64 FILE_MASKS[8] = {
         0x0101010101010101ULL,
@@ -42,6 +43,5 @@ private:
 
     static const int PiecesOpeningPositionTable[6][64];
     static const int PiecesEndgamePositionTable[6][64];
-
     static const int PiecesValues[6];
 };

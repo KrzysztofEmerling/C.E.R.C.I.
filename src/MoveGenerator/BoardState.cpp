@@ -2,6 +2,7 @@
 #include "BoardState.h"
 #include "MoveGenerator.h"
 
+#include <cstring>
 #include <iostream>
 
 BoardState::BoardState(String FENnotation)
@@ -182,9 +183,31 @@ void BoardState::MakeMove(Move move)
 
 bool BoardState::MakeMove(const char *move_notation)
 {
-    // Parsowanie z pełną obsługą promocji i flag
     int from = SquareIndex[move_notation[0] - 'a'][move_notation[1] - '1'];
     int to = SquareIndex[move_notation[2] - 'a'][move_notation[3] - '1'];
+
+    MovesFlags mf = MovesFlags::NormalMove;
+    if (strlen(move_notation) == 5)
+    {
+        switch (move_notation[4])
+        {
+        case 'r':
+            mf = MovesFlags::PromotionRook;
+            break;
+
+        case 'q':
+            mf = MovesFlags::PromotionQueen;
+            break;
+
+        case 'n':
+            mf = MovesFlags::PromotionKnight;
+            break;
+
+        case 'b':
+            mf = MovesFlags::PromotionBishop;
+            break;
+        }
+    }
 
     // Walidacja
     MoveList movesList;
@@ -193,11 +216,21 @@ bool BoardState::MakeMove(const char *move_notation)
     for (int i = 0; i < movesList.movesCount; i++)
     {
         Move move = movesList.moves[i];
-
-        if (move.startingSquere == from && move.destSquere == to)
+        if (mf == NormalMove)
         {
-            MakeMove(move);
-            return true;
+            if (move.startingSquere == from && move.destSquere == to)
+            {
+                MakeMove(move);
+                return true;
+            }
+        }
+        else
+        {
+            if (move.startingSquere == from && move.destSquere == to && move.flag == mf)
+            {
+                MakeMove(move);
+                return true;
+            }
         }
     }
     return false;
