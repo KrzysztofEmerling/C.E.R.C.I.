@@ -163,7 +163,7 @@ int Eval::staticEval(const BoardState &board)
         int bDistToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
 
         whiteMaterialAdventage ? eval += 15 * (14 - distFromKing) : eval -= 15 * (14 - distFromKing);
-        eval += 25 * bDistToCenter - 25 * wDistToCenter;
+        eval += 30 * bDistToCenter - 30 * wDistToCenter;
     }
 
     if (board.IsWhiteMove())
@@ -179,21 +179,30 @@ int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_d
     else if (board.IsCheckmate())
         return -(matScore - (1 + (ref_depth - depth)));
 
-    // else if (m_TT.probe(board.GetHash(), ref_depth, alpha))
-    //     return alpha;
+    else if (m_TT.probe(board.GetHash(), (ref_depth * 1000 + depth), alpha))
+        return alpha;
 
     else if (depth == 0)
     {
         return quiescenceSearch(board, alpha, beta, depth, ref_depth);
     }
+
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
-
+    std::pair<Move, int> moveScores[218];
     int count = movesList.movesCount;
+    for (int i = 0; i < count; ++i)
+    {
+        Move move = movesList.moves[i];
+        moveScores[i] = {move, scoreMove(board, move)};
+    }
+    std::stable_sort(moveScores, moveScores + count,
+                     [](const auto &a, const auto &b)
+                     { return a.second > b.second; });
 
     for (size_t i = 0; i < count; i++)
     {
-        board.MakeMove(movesList.moves[i]);
+        board.MakeMove(moveScores[i].first);
         int eval = -alphaBeta(board, -beta, -alpha, depth - 1, ref_depth);
         board.UndoMove();
 
@@ -210,7 +219,7 @@ int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_d
     if (m_StopSearch) // szybkie bez zapisywania błędnych wyników
         return 0;
 
-    // m_TT.store(board.GetHash(), ref_depth, alpha);
+    m_TT.store(board.GetHash(), (ref_depth * 1000 + depth), alpha);
     return alpha;
 }
 int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, int ref_depth)
@@ -220,8 +229,8 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, in
     else if (board.IsCheckmate())
         return -(matScore - (1 + (ref_depth - depth)));
 
-    // else if (m_TT.probe(board.GetHash(), ref_depth, alpha))
-    //     return alpha;
+    else if (m_TT.probe(board.GetHash(), (ref_depth * 1000 + depth), alpha))
+        return alpha;
 
     int standPat = staticEval(board);
     if (standPat > alpha)
@@ -240,9 +249,9 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, in
         Move move = movesList.moves[i];
         moveScores[captureCount++] = {move, scoreMove(board, move)};
     }
-    std::sort(moveScores, moveScores + captureCount,
-              [](const auto &a, const auto &b)
-              { return a.second > b.second; });
+    std::stable_sort(moveScores, moveScores + captureCount,
+                     [](const auto &a, const auto &b)
+                     { return a.second > b.second; });
 
     for (size_t i = 0; i < captureCount; i++)
     {
@@ -262,7 +271,7 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, in
     if (m_StopSearch)
         return 0;
 
-    // m_TT.store(board.GetHash(), ref_depth, alpha);
+    m_TT.store(board.GetHash(), (ref_depth * 1000 + depth), alpha);
     return alpha;
 }
 
@@ -282,9 +291,9 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
         moveScores[i] = {move, scoreMove(board, move)};
     }
 
-    std::sort(moveScores, moveScores + count,
-              [](const auto &a, const auto &b)
-              { return a.second > b.second; });
+    std::stable_sort(moveScores, moveScores + count,
+                     [](const auto &a, const auto &b)
+                     { return a.second > b.second; });
 
     Move bestMove = moveScores[0].first;
     int alpha = minEvalScore;
@@ -308,11 +317,11 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
             bestMove = move;
         }
 
-        char f1 = 'a' + (move.startingSquere % 8);
-        char r1 = '1' + (move.startingSquere / 8);
-        char f2 = 'a' + (move.destSquere % 8);
-        char r2 = '1' + (move.destSquere / 8);
-        std::cout << "[" << depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << ", alpha: " << alpha << ", beta: " << beta << "\n";
+        // char f1 = 'a' + (move.startingSquere % 8);
+        // char r1 = '1' + (move.startingSquere / 8);
+        // char f2 = 'a' + (move.destSquere % 8);
+        // char r2 = '1' + (move.destSquere / 8);
+        // std::cout << "[" << depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << ", alpha: " << alpha << ", beta: " << beta << "\n";
     }
 
     return bestMove;
@@ -348,7 +357,6 @@ int Eval::CalculateTimeToSearch(const int moveNr, const int wtime, const int bti
 
 Move Eval::FindBestMove(BoardState &board)
 {
-
     Eval::m_StopSearch.store(false, std::memory_order_relaxed);
 
     MoveList movesList;
@@ -356,24 +364,21 @@ Move Eval::FindBestMove(BoardState &board)
 
     std::pair<Move, int> moveScores[218];
     int count = movesList.movesCount;
-
     for (int i = 0; i < count; ++i)
     {
         Move move = movesList.moves[i];
         moveScores[i] = {move, scoreMove(board, move)};
     }
-
-    std::sort(moveScores, moveScores + count,
-              [](const auto &a, const auto &b)
-              { return a.second > b.second; });
+    std::stable_sort(moveScores, moveScores + count,
+                     [](const auto &a, const auto &b)
+                     { return a.second > b.second; });
 
     Move bestMove = moveScores[0].first;
-    int bestEval = minEvalScore;
     int alpha = minEvalScore;
     int beta = maxEvalScore;
 
     int current_depth = 1;
-    do
+    while (current_depth < 100 && !m_StopSearch)
     {
         for (int i = 0; i < count; ++i)
         {
@@ -387,27 +392,27 @@ Move Eval::FindBestMove(BoardState &board)
             if (m_StopSearch)
                 break;
 
-            if (eval > bestEval)
+            if (eval > alpha)
             {
-                bestEval = eval;
+                alpha = eval;
                 bestMove = move;
             }
 
-            char f1 = 'a' + (move.startingSquere % 8);
-            char r1 = '1' + (move.startingSquere / 8);
-            char f2 = 'a' + (move.destSquere % 8);
-            char r2 = '1' + (move.destSquere / 8);
-            std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
+            // char f1 = 'a' + (move.startingSquere % 8);
+            // char r1 = '1' + (move.startingSquere / 8);
+            // char f2 = 'a' + (move.destSquere % 8);
+            // char r2 = '1' + (move.destSquere / 8);
+            // std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
         }
 
         if (m_StopSearch)
             break;
 
-        // std::sort(moveScores, moveScores + count,
-        //           [](const auto &a, const auto &b)
-        //           { return a.second > b.second; });
+        std::stable_sort(moveScores, moveScores + count,
+                         [](const auto &a, const auto &b)
+                         { return a.second > b.second; });
         ++current_depth;
-    } while (!m_StopSearch); // puki co ustawiony na depth 4, przywrócić do 1 i zmienić w wgile na !m_StopSearch
+    }
 
     return bestMove;
 }
@@ -466,9 +471,9 @@ Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
             for (int i = 0; i < moves.movesCount; ++i)
                 scoredMoves[i] = {moves.moves[i], scoreMove(board, moves.moves[i])};
 
-            std::sort(scoredMoves, scoredMoves + moves.movesCount,
-                      [](const auto &a, const auto &b)
-                      { return a.second > b.second; });
+            std::stable_sort(scoredMoves, scoredMoves + moves.movesCount,
+                             [](const auto &a, const auto &b)
+                             { return a.second > b.second; });
 
             int topN = (moves.movesCount < 4) ? moves.movesCount : 4;
             int pick = rand() % topN;
