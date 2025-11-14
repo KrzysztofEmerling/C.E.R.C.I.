@@ -21,9 +21,9 @@ def test(engine_path, board):
     while not board.is_game_over():
         if board.turn == chess.WHITE:
             moves_count += 1             
-            result = engine.play(board, chess.engine.Limit(time=4.2))
+            result = engine.play(board, chess.engine.Limit(time=2.0))
         else:
-            result = engine_stockfish.play(board, chess.engine.Limit(time=0.1))
+            result = engine_stockfish.play(board, chess.engine.Limit(time=0.25))
 
         board.push(result.move)
         # print(board)

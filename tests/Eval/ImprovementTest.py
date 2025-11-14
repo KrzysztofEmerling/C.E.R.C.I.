@@ -111,12 +111,12 @@ def run_improvement_tests(engine_path):
         line = f"Playing White: {wresult} Playing Black: {bresult}"
         if(wresult == "1-0"):
             win_as_white += 1
-        else:
+        elif(wresult == "1/2-1/2"):
             draw += 1
 
         if(bresult == "0-1"):
             win_as_black += 1
-        else:
+        elif(bresult == "1/2-1/2"):
             draw += 1
         
         all_games += 2
