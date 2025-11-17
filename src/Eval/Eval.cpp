@@ -57,95 +57,95 @@ int Eval::staticEval(const BoardState &board)
     u64f wKingBB = pieces[5];
     u64f bKingBB = pieces[11];
 
-    // // Ading agresive playstyle
-    // u64 blockingPawns = pieces[6] | pieces[0];
-    // u64 notBlockers = ~blockingPawns;
+    // Ading agresive playstyle
+    u64 blockingPawns = pieces[6] | pieces[0];
+    u64 notBlockers = ~blockingPawns;
 
-    // u64 kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(bKingBB);
+    u64 kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(bKingBB);
 
-    // u64 lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
-    // lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], blockingPawns) & notBlockers;
-    // u64 heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], blockingPawns) & notBlockers;
-    // heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], blockingPawns) & notBlockers;
+    u64 lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
+    lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], blockingPawns) & notBlockers;
+    u64 heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], blockingPawns) & notBlockers;
+    heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], blockingPawns) & notBlockers;
 
-    // int lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
-    // int heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
-    // eval += lightAttackers * 45 + heavyAttackers * 60;
+    int lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
+    int heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
+    eval += lightAttackers * 45 + heavyAttackers * 60;
 
-    // kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(wKingBB);
+    kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(wKingBB);
 
-    // lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
-    // lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], blockingPawns) & notBlockers;
-    // heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], blockingPawns) & notBlockers;
-    // heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], blockingPawns) & notBlockers;
+    lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
+    lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], blockingPawns) & notBlockers;
+    heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], blockingPawns) & notBlockers;
+    heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], blockingPawns) & notBlockers;
 
-    // lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
-    // heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
-    // eval -= lightAttackers * 45 + heavyAttackers * 60;
+    lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
+    heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
+    eval -= lightAttackers * 45 + heavyAttackers * 60;
     // end
 
-    // Adding Positional playstyle
-    if (allPiecesCount < 31)
-    {
-        u64 allBlockers = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[6] | pieces[7] | pieces[8] | pieces[9] | pieces[10];
-        u64 notBlockers = ~allBlockers;
+    // // Adding Positional playstyle
+    // if (allPiecesCount < 31)
+    // {
+    //     u64 allBlockers = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[6] | pieces[7] | pieces[8] | pieces[9] | pieces[10];
+    //     u64 notBlockers = ~allBlockers;
 
-        u64 wPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[0]);
-        u64 wLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
-        wLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], allBlockers) & notBlockers;
-        u64 wHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], allBlockers) & notBlockers;
-        wHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], allBlockers) & notBlockers;
+    //     u64 wPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[0]);
+    //     u64 wLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
+    //     wLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], allBlockers) & notBlockers;
+    //     u64 wHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], allBlockers) & notBlockers;
+    //     wHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], allBlockers) & notBlockers;
 
-        u64 bPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[6]);
-        u64 bLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
-        bLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], allBlockers) & notBlockers;
-        u64 bHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], allBlockers) & notBlockers;
-        bHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], allBlockers) & notBlockers;
+    //     u64 bPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[6]);
+    //     u64 bLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
+    //     bLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], allBlockers) & notBlockers;
+    //     u64 bHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], allBlockers) & notBlockers;
+    //     bHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], allBlockers) & notBlockers;
 
-        int whiteHeavyControlled = std::popcount(wHeavyAttackedSquers & (~(bLightAttackedSquers | bPawnControled)));
-        int whiteLightControlled = std::popcount(wLightAttackedSquers & (~(bPawnControled)));
+    //     int whiteHeavyControlled = std::popcount(wHeavyAttackedSquers & (~(bLightAttackedSquers | bPawnControled)));
+    //     int whiteLightControlled = std::popcount(wLightAttackedSquers & (~(bPawnControled)));
 
-        int blackHeavyControlled = std::popcount(bHeavyAttackedSquers & (~(wLightAttackedSquers | wPawnControled)));
-        int blackLightControlled = std::popcount(bLightAttackedSquers & (~(wPawnControled)));
+    //     int blackHeavyControlled = std::popcount(bHeavyAttackedSquers & (~(wLightAttackedSquers | wPawnControled)));
+    //     int blackLightControlled = std::popcount(bLightAttackedSquers & (~(wPawnControled)));
 
-        int wActivityBonus = 6 * whiteHeavyControlled + 12 * whiteLightControlled;
-        if (wActivityBonus > 350)
-            wActivityBonus = 350;
+    //     int wActivityBonus = 6 * whiteHeavyControlled + 12 * whiteLightControlled;
+    //     if (wActivityBonus > 350)
+    //         wActivityBonus = 350;
 
-        int bActivityBonus = 6 * blackHeavyControlled + 12 * blackLightControlled;
-        if (bActivityBonus > 350)
-            bActivityBonus = 350;
+    //     int bActivityBonus = 6 * blackHeavyControlled + 12 * blackLightControlled;
+    //     if (bActivityBonus > 350)
+    //         bActivityBonus = 350;
 
-        eval += wActivityBonus;
-        eval -= bActivityBonus;
-    }
-    // zdublowane piony
-    u64f wPawns = pieces[0];
-    u64f bPawns = pieces[6];
-    for (int i = 0; i < 8; i++)
-    {
-        if (std::popcount(wPawns & FILE_MASKS[i]) > 1)
-            eval -= 5;
-        if (std::popcount(bPawns & FILE_MASKS[i]) > 1)
-            eval += 5;
-    }
-    while (wPawns > 0ULL)
-    {
-        int square = __builtin_ctzll(wPawns);
-        wPawns &= wPawns - 1;
+    //     eval += wActivityBonus;
+    //     eval -= bActivityBonus;
+    // }
+    // // zdublowane piony
+    // u64f wPawns = pieces[0];
+    // u64f bPawns = pieces[6];
+    // for (int i = 0; i < 8; i++)
+    // {
+    //     if (std::popcount(wPawns & FILE_MASKS[i]) > 1)
+    //         eval -= 5;
+    //     if (std::popcount(bPawns & FILE_MASKS[i]) > 1)
+    //         eval += 5;
+    // }
+    // while (wPawns > 0ULL)
+    // {
+    //     int square = __builtin_ctzll(wPawns);
+    //     wPawns &= wPawns - 1;
 
-        if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[0]) > 1)
-            eval++;
-    }
-    while (bPawns > 0ULL)
-    {
-        int square = __builtin_ctzll(wPawns);
-        bPawns &= bPawns - 1;
+    //     if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[0]) > 1)
+    //         eval++;
+    // }
+    // while (bPawns > 0ULL)
+    // {
+    //     int square = __builtin_ctzll(wPawns);
+    //     bPawns &= bPawns - 1;
 
-        if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[6]) > 1)
-            eval--;
-    }
-    // end
+    //     if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[6]) > 1)
+    //         eval--;
+    // }
+    // // end
 
     int wKingIndex = __builtin_ctzll(wKingBB);
     int bKingIndex = __builtin_ctzll(bKingBB);
@@ -319,13 +319,18 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
             bestMove = move;
         }
 
-        // char f1 = 'a' + (move.startingSquere % 8);
-        // char r1 = '1' + (move.startingSquere / 8);
-        // char f2 = 'a' + (move.destSquere % 8);
-        // char r2 = '1' + (move.destSquere / 8);
-        // std::cout << "[" << depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << ", alpha: " << alpha << ", beta: " << beta << "\n";
-    }
+        char f1 = 'a' + (move.startingSquere % 8);
+        char r1 = '1' + (move.startingSquere / 8);
+        char f2 = 'a' + (move.destSquere % 8);
+        char r2 = '1' + (move.destSquere / 8);
 
+        int toWhitePerspective = -1;
+        if (board.IsWhiteMove())
+            toWhitePerspective = 1;
+
+        std::cout << f1 << r1 << f2 << r2 << ":" << (eval * toWhitePerspective) << ";";
+    }
+    std::cout << std::endl;
     return bestMove;
 }
 
