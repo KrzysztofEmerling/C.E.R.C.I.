@@ -48,4 +48,6 @@ chess
 
 #python specyfic
 ChessEnv
+*.npz
 __*
+bayesian_tuning
