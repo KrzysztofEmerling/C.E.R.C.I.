@@ -1,5 +1,6 @@
 #include "Eval.h"
 #include "MoveGenerator.h"
+#include "DNN.h"
 #include "MCTS.h"
 
 #include <algorithm>
@@ -10,79 +11,84 @@
 std::atomic<bool> Eval::m_StopSearch = false;
 void Eval::PrepareForNewGame()
 {
+    DNN::LoadWeights("/home/krzysztof/Documents/C.E.R.C.I./src/Eval/agresiveV2.bin");
     m_TT.Clear();
 }
+
 int Eval::staticEval(const BoardState &board)
 {
-    const u64f *pieces = board.GetBBs();
-    int eval = 0;
-    int allPiecesCount = 0;
-    for (int i = 0; i < 5; i++)
-    {
-        int wCount = std::popcount(pieces[i]);
-        int bCount = std::popcount(pieces[i + 6]);
+    float eval = DNN::FitForward(board) * 5000.0f;
 
-        allPiecesCount += wCount + bCount;
-        eval += (wCount - bCount) * PiecesValues[i];
-    }
-    bool whiteMaterialAdventage = eval > 0;
+    // // Imperatywna evaluacja
+    // const u64f *pieces = board.GetBBs();
+    // int eval = 0;
+    // int allPiecesCount = 0;
+    // for (int i = 0; i < 5; i++)
+    // {
+    //     int wCount = std::popcount(pieces[i]);
+    //     int bCount = std::popcount(pieces[i + 6]);
 
-    if (allPiecesCount > 32)
-        allPiecesCount = 32;
-    int isEndGame = ((32 - allPiecesCount) * 1024) / 32;
-    int activityScore = 0;
+    //     allPiecesCount += wCount + bCount;
+    //     eval += (wCount - bCount) * PiecesValues[i];
+    // }
+    // bool whiteMaterialAdventage = eval > 0;
 
-    for (int i = 0; i < 6; i++)
-    {
-        u64f wPiece = pieces[i];
-        u64f bPiece = pieces[i + 6];
+    // if (allPiecesCount > 32)
+    //     allPiecesCount = 32;
+    // int isEndGame = ((32 - allPiecesCount) * 1024) / 32;
+    // int activityScore = 0;
 
-        // Białe
-        while (wPiece)
-        {
-            int index = __builtin_ctzll(wPiece);
-            wPiece &= wPiece - 1;
-            activityScore += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 1536;
-        }
-        // Czarne
-        while (bPiece)
-        {
-            int index = __builtin_ctzll(bPiece);
-            bPiece &= bPiece - 1;
-            int mirroredIndex = index ^ 56;
-            activityScore -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][mirroredIndex] + isEndGame * PiecesEndgamePositionTable[i][mirroredIndex]) / 1536;
-        }
-    }
-    eval += activityScore;
-    u64f wKingBB = pieces[5];
-    u64f bKingBB = pieces[11];
+    // for (int i = 0; i < 6; i++)
+    // {
+    //     u64f wPiece = pieces[i];
+    //     u64f bPiece = pieces[i + 6];
 
-    // Ading agresive playstyle
-    u64 blockingPawns = pieces[6] | pieces[0];
-    u64 notBlockers = ~blockingPawns;
+    //     // Białe
+    //     while (wPiece)
+    //     {
+    //         int index = __builtin_ctzll(wPiece);
+    //         wPiece &= wPiece - 1;
+    //         activityScore += ((1024 - isEndGame) * PiecesOpeningPositionTable[i][index] + isEndGame * PiecesEndgamePositionTable[i][index]) / 1536;
+    //     }
+    //     // Czarne
+    //     while (bPiece)
+    //     {
+    //         int index = __builtin_ctzll(bPiece);
+    //         bPiece &= bPiece - 1;
+    //         int mirroredIndex = index ^ 56;
+    //         activityScore -= ((1024 - isEndGame) * PiecesOpeningPositionTable[i][mirroredIndex] + isEndGame * PiecesEndgamePositionTable[i][mirroredIndex]) / 1536;
+    //     }
+    // }
+    // eval += activityScore;
+    // u64f wKingBB = pieces[5];
+    // u64f bKingBB = pieces[11];
 
-    u64 kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(bKingBB);
+    // // Ading agresive playstyle
+    // u64 blockingPawns = pieces[6] | pieces[0];
+    // u64 notBlockers = ~blockingPawns;
 
-    u64 lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
-    lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], blockingPawns) & notBlockers;
-    u64 heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], blockingPawns) & notBlockers;
-    heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], blockingPawns) & notBlockers;
+    // u64 kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(bKingBB);
 
-    int lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
-    int heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
-    eval += lightAttackers * 45 + heavyAttackers * 60;
+    // u64 lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
+    // lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], blockingPawns) & notBlockers;
+    // u64 heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], blockingPawns) & notBlockers;
+    // heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], blockingPawns) & notBlockers;
 
-    kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(wKingBB);
+    // int lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
+    // int heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
+    // eval += lightAttackers * 45 + heavyAttackers * 60;
 
-    lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
-    lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], blockingPawns) & notBlockers;
-    heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], blockingPawns) & notBlockers;
-    heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], blockingPawns) & notBlockers;
+    // kingDangereZone = MoveGenerator::GetPseudoLegalKingBBs(wKingBB);
 
-    lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
-    heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
-    eval -= lightAttackers * 45 + heavyAttackers * 60;
-    // end
+    // lightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
+    // lightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], blockingPawns) & notBlockers;
+    // heavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], blockingPawns) & notBlockers;
+    // heavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], blockingPawns) & notBlockers;
+
+    // lightAttackers = std::popcount(kingDangereZone & lightAttackedSquers);
+    // heavyAttackers = std::popcount(kingDangereZone & heavyAttackedSquers);
+    // eval -= lightAttackers * 45 + heavyAttackers * 60;
+    // // end
 
     // // Adding Positional playstyle
     // if (allPiecesCount < 31)
@@ -147,26 +153,26 @@ int Eval::staticEval(const BoardState &board)
     // }
     // // end
 
-    int wKingIndex = __builtin_ctzll(wKingBB);
-    int bKingIndex = __builtin_ctzll(bKingBB);
+    // int wKingIndex = __builtin_ctzll(wKingBB);
+    // int bKingIndex = __builtin_ctzll(bKingBB);
 
-    int wKingX = wKingIndex % 8;
-    int wKingY = wKingIndex / 8;
-    int bKingX = bKingIndex % 8;
-    int bKingY = bKingIndex / 8;
+    // int wKingX = wKingIndex % 8;
+    // int wKingY = wKingIndex / 8;
+    // int bKingX = bKingIndex % 8;
+    // int bKingY = bKingIndex / 8;
 
-    if (allPiecesCount < 17)
-    {
-        int distFromKing = abs(wKingX - bKingX) + abs(wKingY - bKingY);
-        int wDistToCenter = std::max(3 - wKingX, wKingX - 4) + std::max(3 - wKingY, wKingY - 4);
-        int bDistToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
+    // if (allPiecesCount < 17)
+    // {
+    //     int distFromKing = abs(wKingX - bKingX) + abs(wKingY - bKingY);
+    //     int wDistToCenter = std::max(3 - wKingX, wKingX - 4) + std::max(3 - wKingY, wKingY - 4);
+    //     int bDistToCenter = std::max(3 - bKingX, bKingX - 4) + std::max(3 - bKingY, bKingY - 4);
 
-        int matingWeigth = 30 * bDistToCenter - 30 * wDistToCenter;
-        whiteMaterialAdventage ? matingWeigth += 15 * (14 - distFromKing) : matingWeigth -= 15 * (14 - distFromKing);
-        matingWeigth = (isEndGame * matingWeigth) / 1024;
+    //     int matingWeigth = 30 * bDistToCenter - 30 * wDistToCenter;
+    //     whiteMaterialAdventage ? matingWeigth += 15 * (14 - distFromKing) : matingWeigth -= 15 * (14 - distFromKing);
+    //     matingWeigth = (isEndGame * matingWeigth) / 1024;
 
-        eval += matingWeigth;
-    }
+    //     eval += matingWeigth;
+    // }
 
     if (board.IsWhiteMove())
         return eval;
