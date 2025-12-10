@@ -22,6 +22,7 @@ private:
     inline static TT m_TT;
 
     static int staticEval(const BoardState &board);
+    static int staticEvalDNN(const BoardState &board);
 
     static int alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_depth = 1);
     static int quiescenceSearch(BoardState &board, int alpha, int beta, int depth, int ref_depth);

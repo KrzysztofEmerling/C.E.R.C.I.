@@ -48,4 +48,11 @@ chess
 
 #python specyfic
 ChessEnv
+*.npz
 __*
+bayesian_tuning
+
+#models and save data
+training/
+training_Positional/
+*.bin
