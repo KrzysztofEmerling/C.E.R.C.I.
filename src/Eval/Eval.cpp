@@ -11,7 +11,7 @@
 std::atomic<bool> Eval::m_StopSearch = false;
 void Eval::PrepareForNewGame()
 {
-    DNN::LoadWeights("/home/krzysztof/Documents/C.E.R.C.I./src/Eval/agresiveV2.bin");
+    DNN::LoadWeights("/home/krzysztof/Documents/C.E.R.C.I./src/Eval/weightsAgersiveMCTSa.bin");
     m_TT.Clear();
 }
 
@@ -96,21 +96,20 @@ int Eval::staticEval(const BoardState &board)
     //     u64 allBlockers = pieces[0] | pieces[1] | pieces[2] | pieces[3] | pieces[4] | pieces[6] | pieces[7] | pieces[8] | pieces[9] | pieces[10];
     //     u64 notBlockers = ~allBlockers;
 
-    //     u64 wPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[0]);
-    //     u64 wLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[1]);
-    //     wLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[2], allBlockers) & notBlockers;
-    //     u64 wHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[3], allBlockers) & notBlockers;
-    //     wHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[4], allBlockers) & notBlockers;
+    //     u64 wPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[BitBoardsIndecis::WhitePawns]);
+    //     u64 wLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[BitBoardsIndecis::WhiteKnights]);
+    //     wLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[BitBoardsIndecis::WhiteBishops], allBlockers) & notBlockers;
+    //     u64 wHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[BitBoardsIndecis::WhiteRooks], allBlockers) & notBlockers;
+    //     wHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[BitBoardsIndecis::WhiteQueens], allBlockers) & notBlockers;
 
-    //     u64 bPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(pieces[6]);
-    //     u64 bLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(pieces[7]);
-    //     bLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(pieces[8], allBlockers) & notBlockers;
-    //     u64 bHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(pieces[9], allBlockers) & notBlockers;
-    //     bHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(pieces[10], allBlockers) & notBlockers;
+    //     u64 bPawnControled = MoveGenerator::GetWhitePawnsAttacksBBs(BitBoardsIndecis::BlackPawns);
+    //     u64 bLightAttackedSquers = MoveGenerator::GetKnightsAttacksBBs(BitBoardsIndecis::BlackKnights);
+    //     bLightAttackedSquers |= MoveGenerator::GetPseudoLegalBishopsBBs(BitBoardsIndecis::BlackBishops, allBlockers) & notBlockers;
+    //     u64 bHeavyAttackedSquers = MoveGenerator::GetPseudoLegalRooksBBs(BitBoardsIndecis::BlackRooks, allBlockers) & notBlockers;
+    //     bHeavyAttackedSquers |= MoveGenerator::GetPseudoLegalQueensBBs(BitBoardsIndecis::BlackQueens, allBlockers) & notBlockers;
 
     //     int whiteHeavyControlled = std::popcount(wHeavyAttackedSquers & (~(bLightAttackedSquers | bPawnControled)));
     //     int whiteLightControlled = std::popcount(wLightAttackedSquers & (~(bPawnControled)));
-
     //     int blackHeavyControlled = std::popcount(bHeavyAttackedSquers & (~(wLightAttackedSquers | wPawnControled)));
     //     int blackLightControlled = std::popcount(bLightAttackedSquers & (~(wPawnControled)));
 
@@ -135,12 +134,13 @@ int Eval::staticEval(const BoardState &board)
     //     if (std::popcount(bPawns & FILE_MASKS[i]) > 1)
     //         eval += 5;
     // }
+    // //Wyspy pionowe
     // while (wPawns > 0ULL)
     // {
     //     int square = __builtin_ctzll(wPawns);
     //     wPawns &= wPawns - 1;
 
-    //     if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[0]) > 1)
+    //     if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[BitBoardsIndecis::WhitePawns]) > 1)
     //         eval++;
     // }
     // while (bPawns > 0ULL)
@@ -148,7 +148,7 @@ int Eval::staticEval(const BoardState &board)
     //     int square = __builtin_ctzll(wPawns);
     //     bPawns &= bPawns - 1;
 
-    //     if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[6]) > 1)
+    //     if (std::popcount(MoveGenerator::GetPseudoLegalKingBBs(BitboardsIndecies[square]) & pieces[BitBoardsIndecis::BlackPawns]) > 1)
     //         eval--;
     // }
     // // end
