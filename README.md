@@ -1,6 +1,6 @@
-# C.E.R.C.I - Chess Engine with Reinforcement-based Cognitive Identities
+# CERCI - Chess Engine with Reinforcement-based Cognitive Identities
 
-C.E.R.C.I (Chess Engine with Reinforcement-based Cognitive Identities) to zaawansowany silnik szachowy łączący backend napisany w **C++** z siecią neuronową **DNN** uzyskaną z treningu nienadzorowanego z wykorzystaniem **MCTS**.  
+CERCI (Chess Engine with Reinforcement-based Cognitive Identities) to zaawansowany silnik szachowy łączący backend napisany w **C++** z siecią neuronową **DNN** uzyskaną z treningu nienadzorowanego z wykorzystaniem **MCTS**.  
 Celem projektu jest stworzenie silnika, który rozwija **unikalne style gry**, mimo zastosowania uczenia nienadzorowanego, wpływając na proces treningu poprzez wstępny trening na syntetycznych danych dla stylów: **Pozycyjny** i **Agresywny**. Zastosowane podejście nie wymagało uprzednio zaetykietowanych danych na konkretne style.
 
 ---
@@ -51,7 +51,7 @@ pip install -r requirements.txt
 
 ## Framework testowy
 
-C.E.R.C.I zawiera również **framework testowy** napisany w Pythonie i dostępny w formie **notatników Jupyter**.  
+CERCI zawiera również **framework testowy** napisany w Pythonie i dostępny w formie **notatników Jupyter**.  
 Framework umożliwia:
 
 - Testów Perft umożliwiających debugowanie generatora ruchów 
