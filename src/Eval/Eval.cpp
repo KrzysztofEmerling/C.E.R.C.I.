@@ -11,26 +11,39 @@
 std::atomic<bool> Eval::m_StopSearch = false;
 void Eval::PrepareForNewGame()
 {
-    DNN::LoadWeights("/home/krzysztof/Documents/C.E.R.C.I./src/Eval/weightsAgersiveMCTSa.bin");
+    DNN::LoadWeights("/home/krzysztof/Documents/C.E.R.C.I./src/Eval/weightsA.bin");
     m_TT.Clear();
 }
 
 int Eval::staticEval(const BoardState &board)
 {
-    float eval = DNN::FitForward(board) * 5000.0f;
+
+    const u64f *pieces = board.GetBBs();
+    int eval = 0;
+    int allPiecesCount = 0;
+    for (int i = 0; i < 5; i++)
+    {
+        int wCount = std::popcount(pieces[i]);
+        int bCount = std::popcount(pieces[i + 6]);
+
+        allPiecesCount += wCount + bCount;
+        eval += (wCount - bCount) * PiecesValues[i];
+    }
+    if(allPiecesCount < 7)
+    {
+        eval += PiecesEndgamePositionTable[BitBoardsIndecis::WhiteKing][__builtin_ctzll(pieces[BitBoardsIndecis::WhiteKing])];
+        eval -= PiecesEndgamePositionTable[BitBoardsIndecis::WhiteKing][__builtin_ctzll(pieces[BitBoardsIndecis::BlackKing])];
+
+        if (board.IsWhiteMove())
+            return eval;
+        else
+            return -eval;
+    }
+
+    eval = DNN::FitForward(board) * 5000.0f;
 
     // // Imperatywna evaluacja
-    // const u64f *pieces = board.GetBBs();
-    // int eval = 0;
-    // int allPiecesCount = 0;
-    // for (int i = 0; i < 5; i++)
-    // {
-    //     int wCount = std::popcount(pieces[i]);
-    //     int bCount = std::popcount(pieces[i + 6]);
 
-    //     allPiecesCount += wCount + bCount;
-    //     eval += (wCount - bCount) * PiecesValues[i];
-    // }
     // bool whiteMaterialAdventage = eval > 0;
 
     // if (allPiecesCount > 32)
