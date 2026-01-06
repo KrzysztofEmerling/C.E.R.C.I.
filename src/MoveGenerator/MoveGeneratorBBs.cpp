@@ -104,3 +104,53 @@ u64 MoveGenerator::GetPseudoLegalKingBBs(u64f king)
 
     return moves;
 }
+
+template <u64 (*Func)(int)>
+constexpr auto generate_lut()
+{
+    std::array<u64, 64> table{};
+    for (int sq = 0; sq < 64; sq++)
+        table[sq] = Func(sq);
+    return table;
+}
+constexpr u64 whitePawnAttacks(int sq)
+{
+    u64 p = 1ULL << sq;
+    return ((p & NOT_COL_A) << 7) |
+           ((p & NOT_COL_H) << 9);
+}
+constexpr u64 blackPawnAttacks(int sq)
+{
+    u64 p = 1ULL << sq;
+    return ((p & NOT_COL_A) >> 9) |
+           ((p & NOT_COL_H) >> 7);
+}
+constexpr u64 knightAttacks(int sq)
+{
+    u64 k = 1ULL << sq;
+    return ((NOT_COL_H & k) << 17) |
+           ((NOT_COL_A & k) << 15) |
+           ((NOT_COLS_GH & k) << 10) |
+           ((NOT_COLS_AB & k) << 6)  |
+           ((NOT_COL_H & k) >> 15) |
+           ((NOT_COL_A & k) >> 17) |
+           ((NOT_COLS_GH & k) >> 6) |
+           ((NOT_COLS_AB & k) >> 10);
+}
+constexpr u64 knightAttacks(int sq)
+{
+    u64 k = 1ULL << sq;
+    return ((NOT_COL_H & k) << 17) |
+           ((NOT_COL_A & k) << 15) |
+           ((NOT_COLS_GH & k) << 10) |
+           ((NOT_COLS_AB & k) << 6)  |
+           ((NOT_COL_H & k) >> 15) |
+           ((NOT_COL_A & k) >> 17) |
+           ((NOT_COLS_GH & k) >> 6) |
+           ((NOT_COLS_AB & k) >> 10);
+}
+
+constexpr auto WhitePawnAttacks = generate_lut<white_pawn_attacks>();
+constexpr auto BlackPawnAttacks = generate_lut<black_pawn_attacks>();
+constexpr auto KnightAttacks = generate_lut<knight_attacks>();
+constexpr auto KingAttacks = generate_lut<king_attacks>();
