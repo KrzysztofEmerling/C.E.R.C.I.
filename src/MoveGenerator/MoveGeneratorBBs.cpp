@@ -6,6 +6,7 @@
 
 u64 MoveGenerator::GetWhitePawnsAttacksBBs(u64f pawns)
 {
+    //TODO dodać też optymalizację dla pionów i sprawdzić czy szybsza
     u64 leftAttack = (pawns & NOT_COL_A) << 7;
     u64 rightAttack = (pawns & NOT_COL_H) << 9;
 
@@ -21,15 +22,14 @@ u64 MoveGenerator::GetBlackPawnsAttacksBBs(u64f pawns)
 
 u64 MoveGenerator::GetKnightsAttacksBBs(u64f knights)
 {
-    // 2 w górę 1 w prawo
-    return ((NOT_COL_H & knights) << 17) |   // 2 up, 1 right ok
-           ((NOT_COL_A & knights) << 15) |   // 2 up, 1 left ok
-           ((NOT_COLS_GH & knights) << 10) | // 1 up, 2 right ok
-           ((NOT_COLS_AB & knights) << 6) |  // 1 up, 2 left ok
-           ((NOT_COL_H & knights) >> 15) |   // 2 down, 1 right
-           ((NOT_COL_A & knights) >> 17) |   // 2 down, 1 left
-           ((NOT_COLS_GH & knights) >> 6) |  // 1 down, 2 right
-           ((NOT_COLS_AB & knights) >> 10);  // 1 down, 2 left;
+    u64 attacks = 0ULL;
+    while (knights)
+    {
+        int square = __builtin_ctzll(knights);
+        knights &= knights - 1;
+        attacks |= KnightAttacksLUT[square];
+    }
+    return attacks;
 }
 
 u64 MoveGenerator::GetPseudoLegalBishopsBBs(u64f bishops, u64 blockers)
@@ -90,67 +90,6 @@ u64 MoveGenerator::GetPseudoLegalQueensBBs(u64f queens, u64 blockers)
 
 u64 MoveGenerator::GetPseudoLegalKingBBs(u64f king)
 {
-    u64 moves = 0ULL;
-    moves |= (king << 8); // Up
-    moves |= (king >> 8); // Down
-
-    moves |= (king << 1) & NOT_COL_A; // Right
-    moves |= (king >> 1) & NOT_COL_H; // Left
-
-    moves |= (king << 9) & NOT_COL_A; // Up-Right
-    moves |= (king << 7) & NOT_COL_H; // Up-Left
-    moves |= (king >> 7) & NOT_COL_A; // Down-Right
-    moves |= (king >> 9) & NOT_COL_H; // Down-Left
-
-    return moves;
+    return KingAttacksLUT[__builtin_ctzll(king)];
 }
 
-template <u64 (*Func)(int)>
-constexpr auto generate_lut()
-{
-    std::array<u64, 64> table{};
-    for (int sq = 0; sq < 64; sq++)
-        table[sq] = Func(sq);
-    return table;
-}
-constexpr u64 whitePawnAttacks(int sq)
-{
-    u64 p = 1ULL << sq;
-    return ((p & NOT_COL_A) << 7) |
-           ((p & NOT_COL_H) << 9);
-}
-constexpr u64 blackPawnAttacks(int sq)
-{
-    u64 p = 1ULL << sq;
-    return ((p & NOT_COL_A) >> 9) |
-           ((p & NOT_COL_H) >> 7);
-}
-constexpr u64 knightAttacks(int sq)
-{
-    u64 k = 1ULL << sq;
-    return ((NOT_COL_H & k) << 17) |
-           ((NOT_COL_A & k) << 15) |
-           ((NOT_COLS_GH & k) << 10) |
-           ((NOT_COLS_AB & k) << 6)  |
-           ((NOT_COL_H & k) >> 15) |
-           ((NOT_COL_A & k) >> 17) |
-           ((NOT_COLS_GH & k) >> 6) |
-           ((NOT_COLS_AB & k) >> 10);
-}
-constexpr u64 knightAttacks(int sq)
-{
-    u64 k = 1ULL << sq;
-    return ((NOT_COL_H & k) << 17) |
-           ((NOT_COL_A & k) << 15) |
-           ((NOT_COLS_GH & k) << 10) |
-           ((NOT_COLS_AB & k) << 6)  |
-           ((NOT_COL_H & k) >> 15) |
-           ((NOT_COL_A & k) >> 17) |
-           ((NOT_COLS_GH & k) >> 6) |
-           ((NOT_COLS_AB & k) >> 10);
-}
-
-constexpr auto WhitePawnAttacks = generate_lut<white_pawn_attacks>();
-constexpr auto BlackPawnAttacks = generate_lut<black_pawn_attacks>();
-constexpr auto KnightAttacks = generate_lut<knight_attacks>();
-constexpr auto KingAttacks = generate_lut<king_attacks>();

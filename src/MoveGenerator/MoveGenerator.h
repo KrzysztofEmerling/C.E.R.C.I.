@@ -73,6 +73,51 @@ private:
     static inline constexpr u64 BLACK_SHORT_CASTLE_MASK = 0x6000000000000000; // f8, g8
     static inline constexpr u64 BLACK_LONG_CASTLE_MASK = 0x0C00000000000000;  // c8, d8
     static inline constexpr u64 BLACK_LONG_ROOK_BLOCK = 0x0E00000000000000;   // b8, c8, d8
+
+    //Tablice LUT
+    static constexpr std::array<u64, 64> WhitePawnAttacksLUT = []() constexpr {
+        std::array<u64, 64> table{};
+        for (int sq = 0; sq < 64; sq++) {
+            u64 p = 1ULL << sq;
+            table[sq] = ((p & NOT_COL_A) << 7) | ((p & NOT_COL_H) << 9);
+        }
+        return table;
+    }();
+
+    static constexpr std::array<u64, 64> BlackPawnAttacksLUT = []() constexpr {
+        std::array<u64, 64> table{};
+        for (int sq = 0; sq < 64; sq++) {
+            u64 p = 1ULL << sq;
+            table[sq] = ((p & NOT_COL_A) >> 9) | ((p & NOT_COL_H) >> 7);
+        }
+        return table;
+    }();
+
+    static constexpr std::array<u64, 64> KnightAttacksLUT = []() constexpr {
+        std::array<u64, 64> table{};
+        for (int sq = 0; sq < 64; sq++) {
+            u64 k = 1ULL << sq;
+            table[sq] = ((NOT_COL_H & k) << 17) | ((NOT_COL_A & k) << 15) |
+                        ((NOT_COLS_GH & k) << 10) | ((NOT_COLS_AB & k) << 6) |
+                        ((NOT_COL_H & k) >> 15) | ((NOT_COL_A & k) >> 17) |
+                        ((NOT_COLS_GH & k) >> 6) | ((NOT_COLS_AB & k) >> 10);
+        }
+        return table;
+    }();
+
+    static constexpr std::array<u64, 64> KingAttacksLUT = []() constexpr {
+        std::array<u64, 64> table{};
+        for (int sq = 0; sq < 64; sq++) {
+            u64 king = 1ULL << sq;
+            u64 moves = (king << 8) | (king >> 8) |
+                        ((king << 1) & NOT_COL_A) | ((king >> 1) & NOT_COL_H) |
+                        ((king << 9) & NOT_COL_A) | ((king << 7) & NOT_COL_H) |
+                        ((king >> 7) & NOT_COL_A) | ((king >> 9) & NOT_COL_H);
+            table[sq] = moves;
+        }
+        return table;
+    }();
+
 };
 
 constexpr u64 GetBetweenSquaresConstexpr(int sq1, int sq2)
@@ -126,52 +171,6 @@ constexpr auto GenerateBetweenSquaresTable()
 }
 constexpr auto BetweenSquaresTable = GenerateBetweenSquaresTable();
 
-template <u64 (*Func)(int)>
-constexpr auto generate_lut()
-{
-    std::array<u64, 64> table{};
-    for (int sq = 0; sq < 64; sq++)
-        table[sq] = Func(sq);
-    return table;
-}
-constexpr u64 whitePawnAttacks(int sq)
-{
-    u64 p = 1ULL << sq;
-    return ((p & NOT_COL_A) << 7) |
-           ((p & NOT_COL_H) << 9);
-}
-constexpr u64 blackPawnAttacks(int sq)
-{
-    u64 p = 1ULL << sq;
-    return ((p & NOT_COL_A) >> 9) |
-           ((p & NOT_COL_H) >> 7);
-}
-constexpr u64 knightAttacks(int sq)
-{
-    u64 k = 1ULL << sq;
-    return ((NOT_COL_H & k) << 17) |
-           ((NOT_COL_A & k) << 15) |
-           ((NOT_COLS_GH & k) << 10) |
-           ((NOT_COLS_AB & k) << 6)  |
-           ((NOT_COL_H & k) >> 15) |
-           ((NOT_COL_A & k) >> 17) |
-           ((NOT_COLS_GH & k) >> 6) |
-           ((NOT_COLS_AB & k) >> 10);
-}
-constexpr u64 knightAttacks(int sq)
-{
-    u64 k = 1ULL << sq;
-    return ((NOT_COL_H & k) << 17) |
-           ((NOT_COL_A & k) << 15) |
-           ((NOT_COLS_GH & k) << 10) |
-           ((NOT_COLS_AB & k) << 6)  |
-           ((NOT_COL_H & k) >> 15) |
-           ((NOT_COL_A & k) >> 17) |
-           ((NOT_COLS_GH & k) >> 6) |
-           ((NOT_COLS_AB & k) >> 10);
-}
 
-constexpr auto WhitePawnAttacksLUT = generate_lut<white_pawn_attacks>();
-constexpr auto BlackPawnAttacksLUT = generate_lut<black_pawn_attacks>();
-constexpr auto KnightAttacksLUT = generate_lut<knight_attacks>();
-constexpr auto KingAttacksLUT = generate_lut<king_attacks>();
+
+

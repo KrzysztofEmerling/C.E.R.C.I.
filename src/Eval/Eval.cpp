@@ -11,7 +11,6 @@
 std::atomic<bool> Eval::m_StopSearch = false;
 void Eval::PrepareForNewGame()
 {
-    DNN::LoadWeights("/home/krzysztof/Documents/C.E.R.C.I./src/Eval/weightsA.bin");
     m_TT.Clear();
 }
 
@@ -41,7 +40,7 @@ int Eval::staticEval(const BoardState &board)
     }
     float pred = DNN::FitForward(board);
     std::cout << pred << std::endl;
-    eval = pred * 500000.0f;
+    eval = pred;
 
     // // Imperatywna evaluacja
 
