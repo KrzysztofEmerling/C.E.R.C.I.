@@ -156,7 +156,7 @@ void UniversalChessInterface::handleSherch(std::stringstream &ss)
             engineThread = std::thread([this, depth]()
                                        {
             Move bestMove = Eval::FindBestMoveFixedDepth(chessBoard, depth);
-            // std::cout << "bestmove " << toAlgebraicNotation(bestMove) << std::endl;
+            std::cout << "bestmove " << toAlgebraicNotation(bestMove) << std::endl;
             engineIsSherching = false; });
 
             break;

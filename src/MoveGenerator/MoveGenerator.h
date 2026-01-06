@@ -1,6 +1,6 @@
 #pragma once
 #include <queue>
-
+#include <array>
 #include "BoardUtils.h"
 #include "BoardState.h"
 

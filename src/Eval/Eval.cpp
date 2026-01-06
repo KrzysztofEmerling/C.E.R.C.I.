@@ -39,8 +39,9 @@ int Eval::staticEval(const BoardState &board)
         else
             return -eval;
     }
-
-    eval = DNN::FitForward(board) * 5000.0f;
+    float pred = DNN::FitForward(board);
+    std::cout << pred << std::endl;
+    eval = pred * 500000.0f;
 
     // // Imperatywna evaluacja
 
@@ -424,11 +425,11 @@ Move Eval::FindBestMove(BoardState &board)
                 bestMove = move;
             }
 
-            // char f1 = 'a' + (move.startingSquere % 8);
-            // char r1 = '1' + (move.startingSquere / 8);
-            // char f2 = 'a' + (move.destSquere % 8);
-            // char r2 = '1' + (move.destSquere / 8);
-            // std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
+            char f1 = 'a' + (move.startingSquere % 8);
+            char r1 = '1' + (move.startingSquere / 8);
+            char f2 = 'a' + (move.destSquere % 8);
+            char r2 = '1' + (move.destSquere / 8);
+            std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
         }
 
         if (m_StopSearch)

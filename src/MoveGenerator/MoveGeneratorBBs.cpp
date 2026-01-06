@@ -3,6 +3,7 @@
 #include "MagicBitboards/BishopMagicBitboards.h"
 #include <queue>
 
+
 u64 MoveGenerator::GetWhitePawnsAttacksBBs(u64f pawns)
 {
     u64 leftAttack = (pawns & NOT_COL_A) << 7;
