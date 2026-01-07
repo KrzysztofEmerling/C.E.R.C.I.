@@ -22,14 +22,16 @@ u64 MoveGenerator::GetBlackPawnsAttacksBBs(u64f pawns)
 
 u64 MoveGenerator::GetKnightsAttacksBBs(u64f knights)
 {
-    u64 attacks = 0ULL;
-    while (knights)
-    {
-        int square = __builtin_ctzll(knights);
-        knights &= knights - 1;
-        attacks |= KnightAttacksLUT[square];
-    }
-    return attacks;
+
+    return ((NOT_COL_H & knights) << 17) |   // 2 up, 1 right ok
+           ((NOT_COL_A & knights) << 15) |   // 2 up, 1 left ok
+           ((NOT_COLS_GH & knights) << 10) | // 1 up, 2 right ok
+           ((NOT_COLS_AB & knights) << 6) |  // 1 up, 2 left ok
+           ((NOT_COL_H & knights) >> 15) |   // 2 down, 1 right
+           ((NOT_COL_A & knights) >> 17) |   // 2 down, 1 left
+           ((NOT_COLS_GH & knights) >> 6) |  // 1 down, 2 right
+           ((NOT_COLS_AB & knights) >> 10);  // 1 down, 2 left;
+
 }
 
 u64 MoveGenerator::GetPseudoLegalBishopsBBs(u64f bishops, u64 blockers)
@@ -90,6 +92,18 @@ u64 MoveGenerator::GetPseudoLegalQueensBBs(u64f queens, u64 blockers)
 
 u64 MoveGenerator::GetPseudoLegalKingBBs(u64f king)
 {
-    return KingAttacksLUT[__builtin_ctzll(king)];
+    u64 moves = 0ULL;
+    moves |= (king << 8); // Up
+    moves |= (king >> 8); // Down
+
+    moves |= (king << 1) & NOT_COL_A; // Right
+    moves |= (king >> 1) & NOT_COL_H; // Left
+
+    moves |= (king << 9) & NOT_COL_A; // Up-Right
+    moves |= (king << 7) & NOT_COL_H; // Up-Left
+    moves |= (king >> 7) & NOT_COL_A; // Down-Right
+    moves |= (king >> 9) & NOT_COL_H; // Down-Left
+
+    return moves;
 }
 

@@ -39,7 +39,7 @@ int Eval::staticEval(const BoardState &board)
             return -eval;
     }
     float pred = DNN::FitForward(board);
-    std::cout << pred << std::endl;
+    // std::cout << pred << std::endl;
     eval = pred;
 
     // // Imperatywna evaluacja
@@ -347,9 +347,9 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
         if (board.IsWhiteMove())
             toWhitePerspective = 1;
 
-        std::cout << f1 << r1 << f2 << r2 << ":" << (eval * toWhitePerspective) << ";";
+        // std::cout << f1 << r1 << f2 << r2 << ":" << (eval * toWhitePerspective) << ";";
     }
-    std::cout << std::endl;
+    // std::cout << std::endl;
     return bestMove;
 }
 
@@ -424,11 +424,11 @@ Move Eval::FindBestMove(BoardState &board)
                 bestMove = move;
             }
 
-            char f1 = 'a' + (move.startingSquere % 8);
-            char r1 = '1' + (move.startingSquere / 8);
-            char f2 = 'a' + (move.destSquere % 8);
-            char r2 = '1' + (move.destSquere / 8);
-            std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
+            // char f1 = 'a' + (move.startingSquere % 8);
+            // char r1 = '1' + (move.startingSquere / 8);
+            // char f2 = 'a' + (move.destSquere % 8);
+            // char r2 = '1' + (move.destSquere / 8);
+            // std::cout << "[" << current_depth << "] Ruch: " << f1 << r1 << f2 << r2 << ", Eval: " << eval << "\n";
         }
 
         if (m_StopSearch)

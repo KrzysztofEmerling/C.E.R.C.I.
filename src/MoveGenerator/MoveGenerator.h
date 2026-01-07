@@ -73,51 +73,6 @@ private:
     static inline constexpr u64 BLACK_SHORT_CASTLE_MASK = 0x6000000000000000; // f8, g8
     static inline constexpr u64 BLACK_LONG_CASTLE_MASK = 0x0C00000000000000;  // c8, d8
     static inline constexpr u64 BLACK_LONG_ROOK_BLOCK = 0x0E00000000000000;   // b8, c8, d8
-
-    //Tablice LUT
-    static constexpr std::array<u64, 64> WhitePawnAttacksLUT = []() constexpr {
-        std::array<u64, 64> table{};
-        for (int sq = 0; sq < 64; sq++) {
-            u64 p = 1ULL << sq;
-            table[sq] = ((p & NOT_COL_A) << 7) | ((p & NOT_COL_H) << 9);
-        }
-        return table;
-    }();
-
-    static constexpr std::array<u64, 64> BlackPawnAttacksLUT = []() constexpr {
-        std::array<u64, 64> table{};
-        for (int sq = 0; sq < 64; sq++) {
-            u64 p = 1ULL << sq;
-            table[sq] = ((p & NOT_COL_A) >> 9) | ((p & NOT_COL_H) >> 7);
-        }
-        return table;
-    }();
-
-    static constexpr std::array<u64, 64> KnightAttacksLUT = []() constexpr {
-        std::array<u64, 64> table{};
-        for (int sq = 0; sq < 64; sq++) {
-            u64 k = 1ULL << sq;
-            table[sq] = ((NOT_COL_H & k) << 17) | ((NOT_COL_A & k) << 15) |
-                        ((NOT_COLS_GH & k) << 10) | ((NOT_COLS_AB & k) << 6) |
-                        ((NOT_COL_H & k) >> 15) | ((NOT_COL_A & k) >> 17) |
-                        ((NOT_COLS_GH & k) >> 6) | ((NOT_COLS_AB & k) >> 10);
-        }
-        return table;
-    }();
-
-    static constexpr std::array<u64, 64> KingAttacksLUT = []() constexpr {
-        std::array<u64, 64> table{};
-        for (int sq = 0; sq < 64; sq++) {
-            u64 king = 1ULL << sq;
-            u64 moves = (king << 8) | (king >> 8) |
-                        ((king << 1) & NOT_COL_A) | ((king >> 1) & NOT_COL_H) |
-                        ((king << 9) & NOT_COL_A) | ((king << 7) & NOT_COL_H) |
-                        ((king >> 7) & NOT_COL_A) | ((king >> 9) & NOT_COL_H);
-            table[sq] = moves;
-        }
-        return table;
-    }();
-
 };
 
 constexpr u64 GetBetweenSquaresConstexpr(int sq1, int sq2)
