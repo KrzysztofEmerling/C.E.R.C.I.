@@ -24,8 +24,8 @@ private:
     static int staticEval(const BoardState &board);
     static int staticEvalDNN(const BoardState &board);
 
-    static int alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_depth = 1);
-    static int quiescenceSearch(BoardState &board, int alpha, int beta, int depth, int ref_depth);
+    static int alphaBeta(BoardState &board, int alpha, int beta, int &visitedNodes, int depth, int ref_depth = 1);
+    static int quiescenceSearch(BoardState &board, int alpha, int beta, int &visitedNode, int depth, int ref_depth);
 
     static int scoreMove(const BoardState &board, const Move &move);
 

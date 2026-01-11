@@ -193,8 +193,9 @@ int Eval::staticEval(const BoardState &board)
         return -eval;
 }
 
-int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_depth)
+int Eval::alphaBeta(BoardState &board, int alpha, int beta, int &visitedNodes, int depth, int ref_depth)
 {
+    ++visitedNodes;
     if (board.IsFiftyMoveRule() || board.IsStalemate() || board.IsInsufficientMaterial() || board.IsThreefoldRepetition())
         return 0;
     else if (board.IsCheckmate())
@@ -205,7 +206,7 @@ int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_d
 
     else if (depth == 0)
     {
-        return quiescenceSearch(board, alpha, beta, depth, ref_depth);
+        return quiescenceSearch(board, alpha, beta, visitedNodes, depth, ref_depth);
     }
 
     MoveList movesList;
@@ -224,7 +225,7 @@ int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_d
     for (size_t i = 0; i < count; i++)
     {
         board.MakeMove(moveScores[i].first);
-        int eval = -alphaBeta(board, -beta, -alpha, depth - 1, ref_depth);
+        int eval = -alphaBeta(board, -beta, -alpha, visitedNodes, depth - 1, ref_depth);
         board.UndoMove();
 
         if (m_StopSearch) // szybkie  wyjście z przeszukiwania
@@ -243,8 +244,9 @@ int Eval::alphaBeta(BoardState &board, int alpha, int beta, int depth, int ref_d
     m_TT.store(board.GetHash(), (ref_depth * 1000 + depth), alpha);
     return alpha;
 }
-int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, int ref_depth)
+int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int &visitedNodes, int depth, int ref_depth)
 {
+    ++visitedNodes;
     if (board.IsFiftyMoveRule() || board.IsStalemate() || board.IsInsufficientMaterial() || board.IsThreefoldRepetition())
         return 0;
     else if (board.IsCheckmate())
@@ -277,7 +279,7 @@ int Eval::quiescenceSearch(BoardState &board, int alpha, int beta, int depth, in
     for (size_t i = 0; i < captureCount; i++)
     {
         board.MakeMove(moveScores[i].first);
-        int eval = -quiescenceSearch(board, -beta, -alpha, depth - 1, ref_depth);
+        int eval = -quiescenceSearch(board, -beta, -alpha, visitedNodes, depth - 1, ref_depth);
         board.UndoMove();
 
         if (m_StopSearch)
@@ -305,6 +307,7 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
 
     std::pair<Move, int> moveScores[218];
     int count = movesList.movesCount;
+    int visitedNodes = 0;
 
     for (int i = 0; i < count; ++i)
     {
@@ -324,7 +327,7 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
     {
         const Move &move = moveScores[i].first;
         board.MakeMove(move);
-        int eval = -alphaBeta(board, -beta, -alpha, depth - 1, depth);
+        int eval = -alphaBeta(board, -beta, -alpha, visitedNodes, depth - 1, depth);
         moveScores[i].second = eval;
 
         board.UndoMove();
@@ -338,18 +341,17 @@ Move Eval::FindBestMoveFixedDepth(BoardState &board, int depth)
             bestMove = move;
         }
 
-        char f1 = 'a' + (move.startingSquere % 8);
-        char r1 = '1' + (move.startingSquere / 8);
-        char f2 = 'a' + (move.destSquere % 8);
-        char r2 = '1' + (move.destSquere / 8);
+        // char f1 = 'a' + (move.startingSquere % 8);
+        // char r1 = '1' + (move.startingSquere / 8);
+        // char f2 = 'a' + (move.destSquere % 8);
+        // char r2 = '1' + (move.destSquere / 8);
 
-        int toWhitePerspective = -1;
-        if (board.IsWhiteMove())
-            toWhitePerspective = 1;
-
+        // int toWhitePerspective = -1;
+        // if (board.IsWhiteMove())
+        //     toWhitePerspective = 1;
         // std::cout << f1 << r1 << f2 << r2 << ":" << (eval * toWhitePerspective) << ";";
     }
-    // std::cout << std::endl;
+    std::cout << "Nodes Visited: " << visitedNodes << std::endl;
     return bestMove;
 }
 
@@ -387,6 +389,7 @@ Move Eval::FindBestMove(BoardState &board)
 
     MoveList movesList;
     MoveGenerator::GetLegalMoves(board, movesList);
+    int visitedNodes = 0;
 
     std::pair<Move, int> moveScores[218];
     int count = movesList.movesCount;
@@ -410,7 +413,7 @@ Move Eval::FindBestMove(BoardState &board)
         {
             const Move &move = moveScores[i].first;
             board.MakeMove(move);
-            int eval = -alphaBeta(board, -beta, -alpha, current_depth - 1, current_depth);
+            int eval = -alphaBeta(board, -beta, -alpha, visitedNodes, current_depth - 1, current_depth);
             moveScores[i].second = eval;
 
             board.UndoMove();
@@ -447,7 +450,7 @@ Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
 {
     using namespace std::chrono;
     auto startTime = high_resolution_clock::now();
-
+    int count = 0;
     MCTS_node root(nullptr);
 
     // Pierwsze poziomowe rozwinięcie
@@ -511,7 +514,7 @@ Move Eval::FindBestMove_MCTS(BoardState &board, int msToThink)
         }
 
         // 3. Simulation
-        int result = quiescenceSearch(state, -matScore, matScore, 0, 1);
+        int result = quiescenceSearch(state, -matScore, matScore, count, 0, 1);
         // 4. Backpropagation
         while (node != nullptr)
         {
