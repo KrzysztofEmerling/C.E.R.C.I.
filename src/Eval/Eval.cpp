@@ -16,10 +16,10 @@ void Eval::PrepareForNewGame()
 
 int Eval::staticEval(const BoardState &board)
 {
-
     const u64f *pieces = board.GetBBs();
     int eval = 0;
     int allPiecesCount = 0;
+
     for (int i = 0; i < 5; i++)
     {
         int wCount = std::popcount(pieces[i]);
@@ -38,12 +38,14 @@ int Eval::staticEval(const BoardState &board)
         else
             return -eval;
     }
+
+    // DNN
     float pred = DNN::FitForward(board);
     // std::cout << pred << std::endl;
     eval = pred;
 
-    // // Imperatywna evaluacja
 
+    // // Imperatywna evaluacja
     // bool whiteMaterialAdventage = eval > 0;
 
     // if (allPiecesCount > 32)

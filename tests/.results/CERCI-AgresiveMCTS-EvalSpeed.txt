@@ -1,0 +1,47 @@
+--------------------------------------------------------------------------------
+Evaluation Speed Test
+--------------------------------------------------------------------------------
+FEN: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+Depth 1: time=0.124023s, nodes=40, nps=323, 3100568.1 ns/node
+Depth 2: time=0.239566s, nodes=102, nps=426, 2348684.8 ns/node
+Depth 3: time=13.171434s, nodes=4779, nps=363, 2756106.8 ns/node
+Depth 4: time=32.934125s, nodes=11500, nps=349, 2863836.9 ns/node
+Depth 5: time=18min 47.9930s, nodes=406452, nps=360, 2775218.3 ns/node
+--------------------------------------------------------------------------------
+FEN: r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1
+Depth 1: time=20.372353s, nodes=3928, nps=193, 5186444.2 ns/node
+Depth 2: time=1min 52.1198s, nodes=21591, nps=193, 5192897.0 ns/node
+Depth 3: time=12min 27.8256s, nodes=147752, nps=198, 5061356.8 ns/node
+Depth 4: time=28min 21.2156s, nodes=335926, nps=197, 5064256.9 ns/node
+Depth 5: time=1h 38min 14.0271s, nodes=1190281, nps=202, 4951794.6 ns/node
+--------------------------------------------------------------------------------
+FEN: rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8
+Depth 1: time=2.296360s, nodes=477, nps=208, 4814172.9 ns/node
+Depth 2: time=4.073485s, nodes=895, nps=220, 4551379.8 ns/node
+Depth 3: time=1min 19.5435s, nodes=18111, nps=228, 4391997.6 ns/node
+Depth 4: time=1min 59.7317s, nodes=28656, nps=239, 4178243.5 ns/node
+Depth 5: time=17min 19.1667s, nodes=272996, nps=263, 3806527.3 ns/node
+--------------------------------------------------------------------------------
+FEN: r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10
+Depth 1: time=6.611761s, nodes=1302, nps=197, 5078157.7 ns/node
+Depth 2: time=2min 43.7594s, nodes=31793, nps=194, 5150801.5 ns/node
+Depth 3: time=12min 49.6371s, nodes=153544, nps=200, 5012485.8 ns/node
+Depth 4: time=43min 4.4619s, nodes=521977, nps=202, 4951294.6 ns/node
+Depth 5: time=2h 53min 36.8872s, nodes=2190442, nps=210, 4755609.7 ns/node
+--------------------------------------------------------------------------------
+FEN: r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1
+Depth 1: time=16.986433s, nodes=3315, nps=195, 5124112.4 ns/node
+Depth 2: time=47.349017s, nodes=9351, nps=197, 5063524.4 ns/node
+Depth 3: time=1min 15.1706s, nodes=14848, nps=198, 5062673.7 ns/node
+Depth 4: time=5min 29.9911s, nodes=67064, nps=203, 4920539.7 ns/node
+Depth 5: time=21min 27.7478s, nodes=266239, nps=207, 4836811.3 ns/node
+--------------------------------------------------------------------------------
+FEN: 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1
+Depth 1: time=0.149074s, nodes=57, nps=382, 2615334.7 ns/node
+Depth 2: time=0.265638s, nodes=152, nps=572, 1747620.7 ns/node
+Depth 3: time=6.681447s, nodes=3307, nps=495, 2020395.2 ns/node
+Depth 4: time=9.144354s, nodes=6336, nps=693, 1443237.7 ns/node
+Depth 5: time=54.076392s, nodes=38054, nps=704, 1421043.6 ns/node
+--------------------------------------------------------------------------------
+Average nps: 216, Average ns/node: 4636153.0, Total time: 7h 24min 23.7536s
+--------------------------------------------------------------------------------
