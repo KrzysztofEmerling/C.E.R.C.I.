@@ -29,8 +29,8 @@ Celem projektu jest stworzenie silnika, który rozwija **unikalne style gry**, m
 
 ```bash
 # Sklonuj repozytorium
-git clone https://github.com/KrzysztofEmerling/C.E.R.C.I..git
-cd C.E.R.C.I.
+git clone https://github.com/KrzysztofEmerling/CERCI.git
+cd CERCI
 
 bash ./cmakeSetup.sh
 cmake --build build
